@@ -9,28 +9,36 @@
  * @brief Enable the Buttons Interrupts
  * 
  *****************************************************************************/
-static void ButtonsEnable(void);
+extern void ButtonsEnable(void);
 
 
 /**************************************************************************//**
  * @brief Disable the Buttons Interrupts
  * 
  *****************************************************************************/
-static void ButtonsDisable(void);
+extern void ButtonsDisable(void);
 
 
 /**************************************************************************//**
  * @brief Initialize input and output ports for Buttons
  * 
  *****************************************************************************/
-static void InitButtons(void);
+extern void InitButtons(void);
 
 
 /**************************************************************************//**
  * @brief Button PB1 Pressed Routine
  * 
  *****************************************************************************/
-void ButtonPB1pressed(void);
+extern void ButtonPB1pressed(void);
+
+
+
+/******************************************************************************
+ * @brief Initial settings for all states
+ *
+ *****************************************************************************/
+extern void STATE_INITIALISER(void);
 
 
 
@@ -44,13 +52,13 @@ void ButtonPB1pressed(void);
  * @brief Pushbutton 0 GPIO_EVEN_IRQHandler
  *
  *****************************************************************************/
-void GPIO_EVEN_IRQHandler(void);
+extern void GPIO_EVEN_IRQHandler(void);
 
 /******************************************************************************
  * @brief Pushbutton 1 GPIO_ODD_IRQHandler
  * 
  *****************************************************************************/
-void GPIO_ODD_IRQHandler(void);
+extern void GPIO_ODD_IRQHandler(void);
 
 
 

@@ -1,9 +1,39 @@
+/***************************************************************************//**
+ * Includes
+ *******************************************************************************/
+#include "efm32.h"
+#include "em_cmu.h"
+#include "em_emu.h"
+#include "em_lcd.h"
+#include "em_gpio.h"
+#include "em_system.h"
+#include "em_timer.h"
+#include "segmentlcd.h"
+//#include "em_chip.h"
+
+#include "globals.h"
+
+/*******************************************************************************
+ **************************   DATA DEFINITIONS   *******************************
+ ******************************************************************************/
+
+
+/*****************************************************************************
+ * data definitions
+ *****************************************************************************/
+menue_state GUIState  = waiting;     /**< Define current GUIState  */
+bool   routineactive  = false;        /**< ON/OFF of functions in States toggled by PB1*/  
+bool GUIstatechanged  = false;       /**< */
+bool   PB1waspressed  = false;       /**< */
+
+
+
 
 /**************************************************************************//**
  * @brief Enable the Button Interrupts
  * 
  *****************************************************************************/
-static void ButtonsEnable(void)
+void ButtonsEnable(void)
 {
   /* Enable GPIO_EVEN interrupt vector in NVIC*/
   NVIC_EnableIRQ(GPIO_EVEN_IRQn);
@@ -17,7 +47,7 @@ static void ButtonsEnable(void)
  * @brief Disable the Button Interrupts
  * 
  *****************************************************************************/
-static void ButtonsDisable(void)
+void ButtonsDisable(void)
 {
   /* Disable GPIO_EVEN interrupt vector in NVIC*/
   NVIC_DisableIRQ(GPIO_EVEN_IRQn);
@@ -32,7 +62,7 @@ static void ButtonsDisable(void)
  * @brief Initialize input and output ports for Buttons
  * 
  *****************************************************************************/
-static void InitButtons(void)
+void InitButtons(void)
 { 
   /* Configure Push button 0 as input*/
   GPIO_PinModeSet(PB0_PORT, PB0_PIN, gpioModeInput, 1);
@@ -67,17 +97,17 @@ void ButtonPB1pressed(void)
     case waiting:                                 // Interrupt in Waiting State
       break;
         
-    case continuous:                              // Interrupt in Continuous State
+    case continious:                              // Interrupt in continious State
       if (routineactive == true)
       {
-        TIMER0->CNT = TIMER0_LOAD_VAL;
-        TIMER0->CC[0].CTRL = DR_CC_RUN;           // RUN Output on TX Module CH1
-        TIMER0->CC[1].CTRL = DR_CC_RUN;           // RUN Output on TX Module CH2
+        TIMER1->CNT = TIMER1_LOAD_VAL;
+        TIMER1->CC[0].CTRL = DR_CC_RUN;           // RUN Output on TX Module CH1
+        TIMER1->CC[1].CTRL = DR_CC_RUN;           // RUN Output on TX Module CH2
       }
       else
       {
-        TIMER0->CC[0].CTRL = DL_CC_STOP;          // Stop Output on TX Module CH1
-        TIMER0->CC[1].CTRL = DH_CC_STOP;          // Stop Output on TX Module CH2
+        TIMER1->CC[0].CTRL = DL_CC_STOP;          // Stop Output on TX Module CH1
+        TIMER1->CC[1].CTRL = DH_CC_STOP;          // Stop Output on TX Module CH2
       }
       SegmentLCD_Symbol(LCD_SYMBOL_GECKO, (int)routineactive);  // show Program State
       break;
@@ -85,26 +115,26 @@ void ButtonPB1pressed(void)
     case sburst:                                  //Interrupt in Burst State
       SegmentLCD_Symbol(LCD_SYMBOL_GECKO, 1);     // show Program State ON
       counter = 0;
-      TIMER0->CNT = TIMER0_LOAD_VAL;
-      TIMER0->CC[2].CTRL = CC2_RUN;
-      TIMER0->CC[0].CTRL = DR_CC_RUN;
-      TIMER0->CC[1].CTRL = DR_CC_RUN;
+      TIMER1->CNT = TIMER1_LOAD_VAL;
+      TIMER1->CC[2].CTRL = CC2_RUN;
+      TIMER1->CC[0].CTRL = DR_CC_RUN;
+      TIMER1->CC[1].CTRL = DR_CC_RUN;
       break;
     
     case rburst:                                  //Interrupt in Repetitive Burst
       if (routineactive == true)
       {             
         counter = 0;
-        TIMER0->CNT = TIMER0_LOAD_VAL;
-        TIMER0->CC[2].CTRL = CC2_RUN;
-        TIMER0->CC[0].CTRL = DR_CC_RUN;
-        TIMER0->CC[1].CTRL = DR_CC_RUN;
+        TIMER1->CNT = TIMER1_LOAD_VAL;
+        TIMER1->CC[2].CTRL = CC2_RUN;
+        TIMER1->CC[0].CTRL = DR_CC_RUN;
+        TIMER1->CC[1].CTRL = DR_CC_RUN;
       }
       else
       {
-        TIMER0->CC[0].CTRL = DL_CC_STOP;          // Stop Output on TX Module CH1
-        TIMER0->CC[1].CTRL = DH_CC_STOP;          // Stop Output on TX Module CH2
-        TIMER0->CC[2].CTRL = CC2_STOP;
+        TIMER1->CC[0].CTRL = DL_CC_STOP;          // Stop Output on TX Module CH1
+        TIMER1->CC[1].CTRL = DH_CC_STOP;          // Stop Output on TX Module CH2
+        TIMER1->CC[2].CTRL = CC2_STOP;
       }
       SegmentLCD_Symbol(LCD_SYMBOL_GECKO, (int)routineactive);  // show Program State
       break;
@@ -129,22 +159,22 @@ void STATE_INITIALISER(void)
   {
     case waiting: 
       SegmentLCD_Write("Idle");
-      TIMER0->CC[0].CTRL = DL_CC_STOP;        // Stop Output on TX Module CH1
-      TIMER0->CC[1].CTRL = DH_CC_STOP;        // Stop Output on TX Module CH2
-      TIMER0->CC[2].CTRL = CC2_STOP;
+      TIMER1->CC[0].CTRL = DL_CC_STOP;        // Stop Output on TX Module CH1
+      TIMER1->CC[1].CTRL = DH_CC_STOP;        // Stop Output on TX Module CH2
+      TIMER1->CC[2].CTRL = CC2_STOP;
       routineactive = false;                  // Set routine as not active
       break;
       
-    case continuous: 
+    case continious: 
       SegmentLCD_Write("CW >>>");
       routineactive = false;                  // Set routine as not active
       break;
       
     case sburst:
       SegmentLCD_Write("Burst");
-      TIMER0->CC[0].CTRL = DL_CC_STOP;
-      TIMER0->CC[1].CTRL = DH_CC_STOP;
-      TIMER0->CC[2].CTRL = CC2_STOP;
+      TIMER1->CC[0].CTRL = DL_CC_STOP;
+      TIMER1->CC[1].CTRL = DH_CC_STOP;
+      TIMER1->CC[2].CTRL = CC2_STOP;
       routineactive = false;                  // Set routine as not active
       break;
       
@@ -173,10 +203,10 @@ void STATE_INITIALISER(void)
   switch (GUIState)
   {
     case waiting: 
-      GUIState = continuous;    // Go to next State
+      GUIState = continious;    // Go to next State
       break;
     
-    case continuous: 
+    case continious: 
       GUIState = sburst;
       break;
     

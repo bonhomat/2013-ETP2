@@ -1,5 +1,18 @@
 
+/***************************************************************************//**
+ * Includes
+ *******************************************************************************/
+#include "efm32.h"
+#include "em_cmu.h"
+#include "em_emu.h"
+#include "em_lcd.h"
+#include "em_gpio.h"
+#include "em_system.h"
+#include "em_timer.h"
+#include "segmentlcd.h"
+//#include "em_chip.h"
 
+#include "globals.h"
 
 
 /**************************************************************************//**

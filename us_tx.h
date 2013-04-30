@@ -23,16 +23,16 @@
 
 
 /******************************************************************************
- * @brief TIMER0_IRQHandler on active burst/rburst counting Interrupts of CC2
+ * @brief TIMER1_IRQHandler on active burst/rburst counting Interrupts of CC2
  *
  *****************************************************************************/
-void TIMER0_IRQHandler(void)
+extern void TIMER1_IRQHandler(void);
 
 
 /*******************************************************************************
- * @brief Initialize TIMER0 in Up/Down Count mode with interrupts on overflow
+ * @brief Initialize TIMER1 in Up/Down Count mode with interrupts on overflow
  *
  ******************************************************************************/
-static void InitTimer0(void)
+extern void InitTimer1(void);
 
 #endif

@@ -31,8 +31,22 @@
 #include "em_timer.h"
 #include "segmentlcd.h"
 #include "em_chip.h"
- 
 
+#include "globals.h"
+#include "clock.h"
+#include "ui.h"
+#include "us_tx.h"
+
+
+/*******************************************************************************
+ **************************   DATA DEFINITIONS   *******************************
+ ******************************************************************************/
+
+
+/*****************************************************************************
+ * data definitions
+ *****************************************************************************/
+bool          wakeUp  = false ;      /**< Used in main loop and ISR  */
 
 
 
@@ -50,10 +64,9 @@ int main(void)
   CHIP_Init();
   
   /*Initialize peripherals */
-  InitClk() ;                   // Initialize clock system
-  InitGPIOClk() ;               // Initialize clock GPIO
+  InitClocks() ;                // Initialize clock system
   InitButtons() ;               // Initialize GPIO-Buttons
-  InitTimer0() ;                // Initialize timer 0
+  InitTimer1() ;                // Initialize timer 0
   SegmentLCD_Init(false);       // Initialise LCD 
   
   /*Write ready at boot up*/
@@ -73,10 +86,10 @@ int main(void)
       GUIstatechanged = false;
     }
     
-    if (PB1waspresses)
+    if (PB1waspressed)
     {
-      ButtonPB1pressesd();
-      PB1waspresses = false;
+      ButtonPB1pressed();
+      PB1waspressed = false;
     }
     /*
    *   Enter code here to be executed in the main loop

@@ -31,8 +31,8 @@
 /* Drive port definitions */
 #define DL_PORT     gpioPortD   /**< em_lib name of port used for DL */
 #define DH_PORT     gpioPortD   /**< em_lib name of port used for DH */
-#define DL_PIN      1           /**< Bit/Pin # for DL in above port */
-#define DH_PIN      2           /**< Bit/Pin # for DH in above port */
+#define DL_PIN      6           /**< Bit/Pin # for DL in above port */
+#define DH_PIN      7           /**< Bit/Pin # for DH in above port */
 #define DL_OFF_LVL  0           /**< Logic level when DL is off */
 #define DH_OFF_LVL  1           /**< Logic level when DH is off */
                                 /**< em_lib functions for setup DH CC Stop */
@@ -74,8 +74,8 @@
                                 /**< Counter definitions */
 #define BURST_PULSE_CNT   80                          // Pulsewith of burst
 #define PERIOD_PULSE_CNT  80000                       // total count in one burst cycle
-#define TIMER0_LOAD_VAL   201                         // the value to loat in Counter
-                                                      //  of Timer0 for next bust
+#define TIMER1_LOAD_VAL   201                         // the value to loat in Counter
+                                                      //  of Timer1 for next bust
 
 /*******************************************************************************
  * Enums
@@ -95,16 +95,14 @@ typedef enum states
 
 
 /*****************************************************************************
- * Static data definitions
+ * global variable references
  *****************************************************************************/
-static menue_state GUIState  = waiting;     /**< Define current GUIState  */
-static bool          wakeUp  = false ;      /**< Used in main loop and ISR  */
-static uint32_t     counter  = 0;
-static bool   routineactive  = false;        /**< ON/OFF of functions in States toggled by PB1*/  
-static bool GUIstatechanged  = false;       /**< */
-static bool   PB1waspresses  = false;       /**< */
-
-
+extern menue_state      GUIState;
+extern bool             wakeUp;
+extern uint32_t         counter;
+extern bool             PB1waspressed;
+extern bool             GUIstatechanged;
+extern bool             routineactive;
 
 
 #endif

@@ -1,17 +1,46 @@
 
+/***************************************************************************//**
+ * Includes
+ *******************************************************************************/
+#include "efm32.h"
+#include "em_cmu.h"
+#include "em_emu.h"
+#include "em_lcd.h"
+#include "em_gpio.h"
+#include "em_system.h"
+#include "em_timer.h"
+#include "segmentlcd.h"
+//#include "em_chip.h"
+
+#include "globals.h"
+
+
+
+/*******************************************************************************
+ **************************   DATA DEFINITIONS   *******************************
+ ******************************************************************************/
+
+
+/*****************************************************************************
+ * data definitions
+ *****************************************************************************/
+uint32_t     counter  = 0;
+   
+
+
 
 /******************************************************************************
- * @brief TIMER0_IRQHandler on active burst/rburst counting Interrupts of CC2
+ * @brief TIMER1_IRQHandler on active burst/rburst counting Interrupts of CC2
  *
  *****************************************************************************/
-void TIMER0_IRQHandler(void)
+void TIMER1_IRQHandler(void)
 {
   /* Store the interrupt flags before clearing */
-  uint16_t intFlags = TIMER0->IF;
+  uint16_t intFlags = TIMER1->IF;
   
   /* Clear the interrupt flags. Only clear the flags that were stored in */
   /* intFlags in case other flags have been set since then */
-  TIMER_IntClear(TIMER0, intFlags);
+  TIMER_IntClear(TIMER1, intFlags);
   
   /* CC2 interrupt occurred */
   if(intFlags & TIMER_IF_CC2)
@@ -22,9 +51,9 @@ void TIMER0_IRQHandler(void)
       case sburst:
         if (counter == BURST_PULSE_CNT)
         {
-          TIMER0->CC[0].CTRL = DL_CC_STOP;            // stop CH1
-          TIMER0->CC[1].CTRL = DH_CC_STOP;            // stop CH2
-          TIMER0->CC[2].CTRL = CC2_STOP;
+          TIMER1->CC[0].CTRL = DL_CC_STOP;            // stop CH1
+          TIMER1->CC[1].CTRL = DH_CC_STOP;            // stop CH2
+          TIMER1->CC[2].CTRL = CC2_STOP;
           SegmentLCD_Symbol(LCD_SYMBOL_GECKO, 0);     // show Program State OFF
         }
         break;
@@ -32,16 +61,16 @@ void TIMER0_IRQHandler(void)
       case rburst:
         if (counter == BURST_PULSE_CNT)
         {
-          TIMER0->CC[0].CTRL = DL_CC_STOP;          // stop CH1
-          TIMER0->CC[1].CTRL = DH_CC_STOP;          // stop CH2
+          TIMER1->CC[0].CTRL = DL_CC_STOP;          // stop CH1
+          TIMER1->CC[1].CTRL = DH_CC_STOP;          // stop CH2
         }
         else if (GUIState == rburst && counter == PERIOD_PULSE_CNT)
         {
           // after a cycle restart the cycle again
           counter = 0;
-          TIMER0->CNT = TIMER0_LOAD_VAL;
-          TIMER0->CC[0].CTRL = DR_CC_RUN;
-          TIMER0->CC[1].CTRL = DR_CC_RUN;
+          TIMER1->CNT = TIMER1_LOAD_VAL;
+          TIMER1->CC[0].CTRL = DR_CC_RUN;
+          TIMER1->CC[1].CTRL = DR_CC_RUN;
         }
         break;
       
@@ -50,22 +79,22 @@ void TIMER0_IRQHandler(void)
     }
     
   }
-}// END: TIMER0_IRQHandler
+}// END: TIMER1_IRQHandler
 
 
 
 /*******************************************************************************
- * @brief Initialize TIMER0 in Up/Down Count mode with interrupts on overflow
+ * @brief Initialize TIMER1 in Up/Down Count mode with interrupts on overflow
  *
  ******************************************************************************/
-static void InitTimer0(void)
+void InitTimer1(void)
 {  
  
   /* Enable clock for GPIO module */
   CMU_ClockEnable(cmuClock_GPIO, true);
   
-  /* Enable clock for TIMER0 */
-  CMU_ClockEnable(cmuClock_TIMER0, true);
+  /* Enable clock for TIMER1 */
+  CMU_ClockEnable(cmuClock_TIMER1, true);
   
   
   /* Set CC0 location 3 pin (PD1) as output */
@@ -79,39 +108,39 @@ static void InitTimer0(void)
   
   /* Configure CC channel 0 */
   #define CC_CH_0     0
-  TIMER0->CC[CC_CH_0].CTRL = DL_CC_STOP;
+  TIMER1->CC[CC_CH_0].CTRL = DL_CC_STOP;
   #define CC_VAL_CH0  TOP/4
-  TIMER_CompareSet(TIMER0, CC_CH_0, CC_VAL_CH0);
+  TIMER_CompareSet(TIMER1, CC_CH_0, CC_VAL_CH0);
   
   /* Configure CC channel 1 */
   #define CC_CH_1     1
-  TIMER0->CC[CC_CH_1].CTRL = DH_CC_STOP;
+  TIMER1->CC[CC_CH_1].CTRL = DH_CC_STOP;
   #define CC_VAL_CH1  TOP/4*3
-  TIMER_CompareSet(TIMER0, CC_CH_1, CC_VAL_CH1);
+  TIMER_CompareSet(TIMER1, CC_CH_1, CC_VAL_CH1);
   
   /* Configure CC channel 2 */
   #define CC_CH_2     2
-  TIMER0->CC[CC_CH_2].CTRL = CC2_STOP;
+  TIMER1->CC[CC_CH_2].CTRL = CC2_STOP;
   #define CC_VAL_CH2  TOP/2
-  TIMER_CompareSet(TIMER0, CC_CH_2, CC_VAL_CH2);
+  TIMER_CompareSet(TIMER1, CC_CH_2, CC_VAL_CH2);
   
   
-  /* Enable overflow interrupt for TIMER0*/
-  TIMER_IntEnable(TIMER0, TIMER_IEN_CC2);
+  /* Enable overflow interrupt for TIMER1*/
+  TIMER_IntEnable(TIMER1, TIMER_IEN_CC2);
   
   
-  /* Clear pending TIMER0 interrupts */
-  NVIC_ClearPendingIRQ(TIMER0_IRQn);
-  /* Enable TIMER0 interrupt vector in NVIC */
-  NVIC_EnableIRQ(TIMER0_IRQn);
+  /* Clear pending TIMER1 interrupts */
+  NVIC_ClearPendingIRQ(TIMER1_IRQn);
+  /* Enable TIMER1 interrupt vector in NVIC */
+  NVIC_EnableIRQ(TIMER1_IRQn);
   
   
-  /* Route CC0 and CC1 to location 3 (PD1) and enable pins */
-  TIMER0->ROUTE |= (TIMER_ROUTE_CC0PEN | TIMER_ROUTE_CC1PEN | TIMER_ROUTE_LOCATION_LOC3);
+  /* Route CC0 and CC1 to location 4 (PD6 PD7) and enable pins */
+  TIMER1->ROUTE |= (TIMER_ROUTE_CC0PEN | TIMER_ROUTE_CC1PEN | TIMER_ROUTE_LOCATION_LOC4);
   
   
   /* Set Top Value */
-  TIMER_TopSet(TIMER0, TOP); 
+  TIMER_TopSet(TIMER1, TOP); 
   
   /* Select timer parameters */  
   TIMER_Init_TypeDef timerInit = TIMER_INIT_DEFAULT;
@@ -130,7 +159,7 @@ static void InitTimer0(void)
   
   
   /* Initialize and Configure timer */
-  TIMER_Init(TIMER0, &timerInit);
+  TIMER_Init(TIMER1, &timerInit);
   
   
   /* Start timer */

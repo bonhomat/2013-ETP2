@@ -25,6 +25,6 @@
  * @brief Initializes all needed clocks
  * 
  *****************************************************************************/
-void InitClocks(void)
+extern void InitClocks(void);
 
 #endif
