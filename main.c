@@ -68,7 +68,6 @@ int main(void)
   /*Initialize peripherals */
   InitClocks() ;                // Initialize clock system
   InitButtons() ;               // Initialize GPIO-Buttons
-  InitTimer1() ;                // Initialize timer 0
   SegmentLCD_Init(false);       // Initialise LCD
   
   

@@ -12,6 +12,7 @@
 //#include "em_chip.h"
 
 #include "globals.h"
+#include "us_tx.h"
 #include "us_uart.h"
 
 /*******************************************************************************
@@ -94,10 +95,6 @@ void ButtonPB1pressed(void)
   
   switch (GUIState)
   {
-    
-    case waiting:                                 // Interrupt in Waiting State
-      break;
-        
     case continious:                              // Interrupt in continious State
       if (routineactive == true)
       {
@@ -165,21 +162,18 @@ void ButtonPB1pressed(void)
 void STATE_INITIALISER(void)
 {
   switch (GUIState)
-  {
-    case waiting: 
-      SegmentLCD_Write("Idle");
+  {   
+    case continious:
+      InitTimer1() ;                          // Initialize timer 0
+      SegmentLCD_Write("CW >>>");
       TIMER1->CC[0].CTRL = DL_CC_STOP;        // Stop Output on TX Module CH1
       TIMER1->CC[1].CTRL = DH_CC_STOP;        // Stop Output on TX Module CH2
       TIMER1->CC[2].CTRL = CC2_STOP;
       routineactive = false;                  // Set routine as not active
       break;
       
-    case continious: 
-      SegmentLCD_Write("CW >>>");
-      routineactive = false;                  // Set routine as not active
-      break;
-      
     case sburst:
+      InitTimer1() ;                          // Initialize timer 0
       SegmentLCD_Write("Burst");
       TIMER1->CC[0].CTRL = DL_CC_STOP;
       TIMER1->CC[1].CTRL = DH_CC_STOP;
@@ -188,6 +182,7 @@ void STATE_INITIALISER(void)
       break;
       
     case rburst: 
+      InitTimer1() ;                          // Initialize timer 0
       SegmentLCD_Write("R-Burst");
       routineactive = false;                  // Set routine as not active
       break;
@@ -217,10 +212,6 @@ void STATE_INITIALISER(void)
 {
   switch (GUIState)
   {
-    case waiting: 
-      GUIState = continious;    // Go to next State
-      break;
-    
     case continious: 
       GUIState = sburst;
       break;
@@ -234,11 +225,11 @@ void STATE_INITIALISER(void)
       break;
     
 	case uart: 
-      GUIState = waiting;
+      GUIState = continious;
       break;
 	
     default:
-      GUIState = waiting;
+      GUIState = continious;
   } //End: switch
 }
 

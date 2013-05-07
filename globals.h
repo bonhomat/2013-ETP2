@@ -55,15 +55,15 @@
                       TIMER_CC_CTRL_CMOA_TOGGLE         | \
                       TIMER_CC_CTRL_MODE_OUTPUTCOMPARE)
 
-#define CC2_RUN       TIMER_CC_CTRL_MODE_OUTPUTCOMPARE
-#define CC2_STOP      TIMER_CC_CTRL_MODE_OFF
+#define CC2_RUN     TIMER_CC_CTRL_MODE_OUTPUTCOMPARE
+#define CC2_STOP    TIMER_CC_CTRL_MODE_OFF
                       
                       
-                                /**< Button port definitions */
-#define PB0_PORT   gpioPortD                          //Port D
-#define PB0_PIN    8                                  //Button 0 on Board tg
-#define PB1_PORT   gpioPortB                          //Port B
-#define PB1_PIN    11                                 //Button 1 on Board tg
+                    /**< Button port definitions */
+#define PB0_PORT    gpioPortD           //Port D
+#define PB0_PIN     8                   //Button 0 on Board tg
+#define PB1_PORT    gpioPortB           //Port B
+#define PB1_PIN     11                  //Button 1 on Board tg
 
 
                                 /**< Timing definitions */
