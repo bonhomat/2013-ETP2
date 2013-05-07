@@ -10,10 +10,10 @@
 #include "em_timer.h"
 #include "segmentlcd.h"
 #include "em_device.h"
+#include "dmactrl.h"
 #include "em_leuart.h"
 #include "em_dma.h"
-#include "em_rtc.h"
-//#include "efm32.h"
+//#include "em_rtc.h"
 
 #include "globals.h"
 
@@ -28,22 +28,7 @@
 
 #define DMA_CHANNEL           0
 #define BUF_MAX               8
- 
- /******************************************************************************
- * @brief DMA control block
- *
- *****************************************************************************/
- /* DMA control block, must be aligned to 256. */
-#if defined (__ICCARM__)
-#pragma data_alignment=256
-DMA_DESCRIPTOR_TypeDef dmaControlBlock[DMA_CHAN_COUNT * 2];
-#elif defined (__CC_ARM)
-DMA_DESCRIPTOR_TypeDef dmaControlBlock[DMA_CHAN_COUNT * 2] __attribute__ ((aligned(256)));
-#elif defined (__GNUC__)
-DMA_DESCRIPTOR_TypeDef dmaControlBlock[DMA_CHAN_COUNT * 2] __attribute__ ((aligned(256)));
-#else
-#error Undefined toolkit, need to define alignment
-#endif
+
 
 char hello[] = { 'H', 'E', 'L', 'L', 'O',' ', 0,' '};                                         //to be included by ADC
 
