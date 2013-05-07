@@ -12,6 +12,7 @@
 //#include "em_chip.h"
 
 #include "globals.h"
+#include "us_uart.h"
 
 /*******************************************************************************
  **************************   DATA DEFINITIONS   *******************************
@@ -130,6 +131,7 @@ void ButtonPB1pressed(void)
         TIMER1->CC[0].CTRL = DR_CC_RUN;
         TIMER1->CC[1].CTRL = DR_CC_RUN;
       }
+
       else
       {
         TIMER1->CC[0].CTRL = DL_CC_STOP;          // Stop Output on TX Module CH1
@@ -138,8 +140,15 @@ void ButtonPB1pressed(void)
       }
       SegmentLCD_Symbol(LCD_SYMBOL_GECKO, (int)routineactive);  // show Program State
       break;
-      
-    default:
+    
+	case uart:                                  //send data
+      {
+	  SegmentLCD_Symbol(LCD_SYMBOL_GECKO, 1);     // show Program State ON
+      sendUart();
+	  }
+      break;      
+    
+	default:
       SegmentLCD_Write("ERROR");                   //Interrupt in all other cases
       break;
   }  
@@ -182,6 +191,12 @@ void STATE_INITIALISER(void)
       SegmentLCD_Write("R-Burst");
       routineactive = false;                  // Set routine as not active
       break;
+
+	case uart: 
+      SegmentLCD_Write("Uart");
+	  initUart();			                  // Initialise Uart
+      routineactive = false;                  // Set routine as not active
+      break;
       
     default:
       SegmentLCD_Write("ERROR");
@@ -215,9 +230,13 @@ void STATE_INITIALISER(void)
       break;
     
     case rburst: 
-      GUIState = waiting;
+      GUIState = uart;
       break;
     
+	case uart: 
+      GUIState = waiting;
+      break;
+	
     default:
       GUIState = waiting;
   } //End: switch

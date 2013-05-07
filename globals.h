@@ -90,6 +90,7 @@ typedef enum states
   continious,                   /**< State ON */
   sburst,                       /**< State single Burst */
   rburst,                       /**< State continious burst*/
+  uart,							/**< State Uart transmit*/
   init                          /**< Initial state*/
 } menue_state ;
 
