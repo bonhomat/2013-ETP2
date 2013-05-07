@@ -36,6 +36,7 @@
 #include "clock.h"
 #include "ui.h"
 #include "us_tx.h"
+#include "us_uart.h"
 
 
 /*******************************************************************************
@@ -66,7 +67,8 @@ int main(void)
   /*Initialize peripherals */
   InitClocks() ;                // Initialize clock system
   InitButtons() ;               // Initialize GPIO-Buttons
-  SegmentLCD_Init(false);       // Initialise LCD 
+  SegmentLCD_Init(false);       // Initialise LCD
+  
   
   /*Write ready at boot up*/
   SegmentLCD_Write("Ready");
