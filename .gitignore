@@ -1,0 +1,9 @@
+*.bin
+*.sfr
+*.ewp
+*.ewd
+*.o
+Debug
+*.dep
+*.eww
+settings
