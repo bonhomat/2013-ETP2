@@ -37,7 +37,7 @@
 #include "ui.h"
 #include "us_tx.h"
 #include "us_uart.h"
-//#include "us_rx.h"    // Datei existiert noch nich im Repository
+#include "us_rx.h"    // Datei existiert noch nich im Repository
 
 
 /*******************************************************************************
