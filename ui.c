@@ -14,6 +14,7 @@
 #include "globals.h"
 #include "us_tx.h"
 #include "us_uart.h"
+#include "us_rx.h"
 
 /*******************************************************************************
  **************************   DATA DEFINITIONS   *******************************
@@ -24,7 +25,7 @@
  * data definitions
  *****************************************************************************/
 menue_state GUIState  = waiting;     /**< Define current GUIState  */
-bool   routineactive  = false;        /**< ON/OFF of functions in States toggled by PB1*/  
+bool   routineactive  = false;       /**< ON/OFF of functions in States toggled by PB1*/  
 bool GUIstatechanged  = false;       /**< */
 bool   PB1waspressed  = false;       /**< */
 
@@ -144,7 +145,14 @@ void ButtonPB1pressed(void)
       sendUart();
 	  }
       break;      
-    
+
+	case measure:                                  //measure
+      {
+	  SegmentLCD_Symbol(LCD_SYMBOL_GECKO, 1);   // show Program State ON
+      Measure();
+	  }
+      break; 
+	  
 	default:
       SegmentLCD_Write("ERROR");                   //Interrupt in all other cases
       break;
@@ -187,11 +195,18 @@ void STATE_INITIALISER(void)
       routineactive = false;                  // Set routine as not active
       break;
 
-	case uart: 
+    case uart: 
       SegmentLCD_Write("Uart");
 	  initUart();			                  // Initialise Uart
       routineactive = false;                  // Set routine as not active
       break;
+	  
+    case measure: 
+      SegmentLCD_Write("Mess");
+	  InitADC();
+	  Measure();			                  // Initialise ADC
+      routineactive = false;                  // Set routine as not active
+      break;	  
       
     default:
       SegmentLCD_Write("ERROR");
@@ -225,9 +240,10 @@ void STATE_INITIALISER(void)
       break;
     
 	case uart: 
-      GUIState = continious;
+      GUIState = measure;
       break;
-	
+	case measure:
+	  GUIState = continious;
     default:
       GUIState = continious;
   } //End: switch

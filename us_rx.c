@@ -31,6 +31,8 @@
 /* ADC settings */
 #define ADC_samp_freq                 160000    ///< ADC sampling frequency
 #define DMA_CHANNEL_ADC               1         ///< DMA channel for ADC
+#define ADC_Port                      gpioPortD ///< DMA Port 
+#define ADC_Pin                       4         ///< DMA Pin 
 
 /* ADC => DMA buffers and related */
 DMA_CB_TypeDef cbn;                             ///< callback structure
@@ -67,12 +69,12 @@ uint16_t calculateAverage(uint16_t sampleNumber, uint16_t* dmaBuffer)
  *****************************************************************************/
 void ADC0_IRQHandler(void) {
   ADC_IntClear(ADC0, ADC_IFC_SINGLEOF);         /* Clear interrupt flag */
-  while(1){
+  //while(1){
     /** ERROR: ADC Result overflow has occured.
      * This indicates that the DMA is not able to keep up with the ADC sample
      * rate and that a samples has been written to the ADC result registers
      * before the DMA was able to fetch the previous result. */ 
-  }
+  //}
 }
 
 /**************************************************************************//**
@@ -119,7 +121,17 @@ void transferComplete(unsigned int channel, bool primary, void *user) {
     = calculateAverage(DMA_BUFFER_SIZE, &DMA_buffer[DMA_buffer_last][0]);
 
   //LEDoff();                           /* for debugging and timing check*/ 
+  
 }
+/**************************************************************************//**
+ * @brief  Enabling gpio Ports
+ * @par
+ *****************************************************************************/
+void SetupGpio(void){
+  
+  GPIO_PinModeSet(ADC_Port, ADC_Pin, gpioModeInput,         1); /*Setup Pin of ADC*/  
+
+  }
 
 /**************************************************************************//**
  * @brief  Enabling clocks
@@ -195,6 +207,7 @@ void setupDma(void) {
  * @par
  *****************************************************************************/
 void setupAdc(void) {
+
   ADC_Init_TypeDef        adcInit       = ADC_INIT_DEFAULT;
   ADC_InitSingle_TypeDef  adcInitSingle = ADC_INITSINGLE_DEFAULT;
   
@@ -279,6 +292,8 @@ void setupAdc(void) {
 //}
 void InitADC()
 {
+  SetupGpio();    /* Setup the physical Gpio port for ADC*/ 
+  
   setupCmu();     /* Configuring clocks in the Clock Management Unit (CMU) */
 
   setupDma();     /* Configure DMA transfer from ADC to RAM using ping-pong */      
@@ -290,7 +305,12 @@ void InitADC()
 void Measure()
 {
   //transferComplete(unsigned int channel, bool primary, void *user);
-  DMA_Reset();
+  //DMA_Reset();
+  while(transferActive) {
+  //EMU_EnterEM1(); 
+   INT_Enable();
+   INT_Disable();
+  }
   
   INT_Enable();  /* Activate interupt of DMA */
 }
