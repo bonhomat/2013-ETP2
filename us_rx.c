@@ -33,12 +33,13 @@
 #define DMA_CHANNEL_ADC               1         ///< DMA channel for ADC
 #define ADC_Port                      gpioPortD ///< DMA Port 
 #define ADC_Pin                       4         ///< DMA Pin 
+#define ValBarrier                    3200      ///< ADC value barrier
 
 /* ADC => DMA buffers and related */
 DMA_CB_TypeDef cbn;                             ///< callback structure
 volatile bool transferActive;                   ///< transfer flag
-#define DMA_TRANSFER_COUNT            5         ///< x DMA transfers
-#define DMA_BUFFER_SIZE               20        ///< x entries in one DMA buffer
+#define DMA_TRANSFER_COUNT            40        ///< x DMA transfers timeout for overdistance >60ms,10m
+#define DMA_BUFFER_SIZE               256       ///< x entries in one DMA buffer, T-buffer 1,6ms
 #define DMA_BUFFER_COUNT              4         ///< x DMA buffers >= 2
 uint16_t DMA_buffer[DMA_BUFFER_COUNT][DMA_BUFFER_SIZE];   ///< the data
 uint16_t DMA_buffer_last;                       ///< buffer ready for processing
@@ -46,6 +47,7 @@ uint16_t DMA_buffer_current;                    ///< buffer is currently filled
 uint16_t DMA_buffer_next;                       ///< buffer will be used next
 
 uint16_t averageValue[DMA_TRANSFER_COUNT];      ///< processed data
+bool MaxReaced = false;							///< stops ADC when Max reached
  
 
  /**************************************************************************//**
@@ -76,7 +78,21 @@ void ADC0_IRQHandler(void) {
      * before the DMA was able to fetch the previous result. */ 
   //}
 }
+/**************************************************************************//**
+ * @brief  Comparing recived data to trigger measurements
+ * @par
+ *****************************************************************************/
+void compareData(void)
+{
+    if ((uint16_t)ValBarrier < DMA_buffer[DMA_buffer_last][5]) {  /* Test value in DMA Buffer*/
+	
+	  MaxReaced = true;				    /* Set Stopflag for ADC transfer*/
 
+    }
+    else{
+    
+    }
+}
 /**************************************************************************//**
  * @brief  Call-back called when DMA transfer is complete
  * @param [in] DMA channel
@@ -85,6 +101,7 @@ void ADC0_IRQHandler(void) {
  * @par
  *****************************************************************************/
 void transferComplete(unsigned int channel, bool primary, void *user) {
+  if(MaxReaced==false){               /* Continiue when max not reaced*/
   (void) user;
   
   static int transfernumber = 0;      /* number of transfered buffers */
@@ -100,9 +117,9 @@ void transferComplete(unsigned int channel, bool primary, void *user) {
   
   //if (transfernumber == 4) { RCtoggle(); } /* ramp up then down for debugging */
     
-  /* Let the transfer be repeated a few times to illustrate re-activation */
-  if (transfernumber < DMA_TRANSFER_COUNT) {
-    DMA_RefreshPingPong(              /* Re-activate the DMA */
+   /* Let the transfer be repeated a few times to illustrate re-activation */
+   if (transfernumber < DMA_TRANSFER_COUNT) {
+     DMA_RefreshPingPong(              /* Re-activate the DMA */
                         channel,
                         primary,
                         false,
@@ -110,19 +127,32 @@ void transferComplete(unsigned int channel, bool primary, void *user) {
                         NULL,
                         DMA_BUFFER_SIZE - 1,
                         false);
-  } else {
+    }
+	else {
     TIMER_Enable(TIMER0, false);      /* Stopping ADC by stopping TIMER0 */
     ADC_Reset(ADC0);                  /* Stopping ADC */
     transferActive = false;           /* Clearing Flag */
-  } 
+    } 
   
   /* do some calculations on the buffer with data ready for processing */
   averageValue[transfernumber-1]
     = calculateAverage(DMA_BUFFER_SIZE, &DMA_buffer[DMA_buffer_last][0]);
 
+  compareData();						/* Check Buffer values for bursts*/
+  }
+  else
+  {
+    TIMER_Enable(TIMER0, false);      /* Stopping ADC by stopping TIMER0 */
+    ADC_Reset(ADC0);                  /* Stopping ADC */
+    transferActive = false;           /* Clearing Flag */
+    MaxReaced=false;
+    //DMA_Reset();
+  }
   //LEDoff();                           /* for debugging and timing check*/ 
   
 }
+
+
 /**************************************************************************//**
  * @brief  Enabling gpio Ports
  * @par
@@ -139,7 +169,7 @@ void SetupGpio(void){
  *****************************************************************************/
 void setupCmu(void) {
   /* Set HFRCO frequency */
-  // CMU_HFRCOBandSet(cmuHFRCOBand_28MHz);                                    /to be included by clocks.c
+  // CMU_HFRCOBandSet(cmuHFRCOBand_28MHz);
   CMU_HFRCOBandSet(cmuHFRCOBand_21MHz);
   // CMU_HFRCOBandSet(cmuHFRCOBand_14MHz);
   
@@ -244,9 +274,9 @@ void setupAdc(void) {
   PRS_SourceSignalSet(0, PRS_CH_CTRL_SOURCESEL_TIMER0, PRS_CH_CTRL_SIGSEL_TIMER0OF, prsEdgeOff);
   
   /* Configure TIMER to trigger ADC sampling rate */
-  TIMER_Init_TypeDef    timerInit     = TIMER_INIT_DEFAULT;
-  TIMER_TopSet(TIMER0,  CMU_ClockFreqGet(cmuClock_TIMER0)/ADC_samp_freq);
-  TIMER_Init(TIMER0, &timerInit);
+  //TIMER_Init_TypeDef    timerInit     = TIMER_INIT_DEFAULT;
+  //TIMER_TopSet(TIMER0,  CMU_ClockFreqGet(cmuClock_TIMER0)/ADC_samp_freq);
+  //TIMER_Init(TIMER0, &timerInit);
 }
 
  /**************************************************************************//**
@@ -300,17 +330,22 @@ void InitADC()
   
   setupAdc();     /* Configura ADC Sampling */
   
-  INT_Disable();  /* Disable interupt to hold CPU awake in EM1 */
+  //INT_Disable();  /* Disable interupt to hold CPU awake in EM1 */
 }
+
 void Measure()
 {
-  //transferComplete(unsigned int channel, bool primary, void *user);
-  //DMA_Reset();
-  while(transferActive) {
+  /* Configure TIMER to trigger ADC sampling rate */
+  TIMER_Init_TypeDef    timerInit     = TIMER_INIT_DEFAULT;
+  TIMER_TopSet(TIMER0,  CMU_ClockFreqGet(cmuClock_TIMER0)/ADC_samp_freq);
+  TIMER_Init(TIMER0, &timerInit);
+
+  while((MaxReaced==false)) {
   //EMU_EnterEM1(); 
    INT_Enable();
    INT_Disable();
   }
+  //DMA_Reset();
   
   INT_Enable();  /* Activate interupt of DMA */
 }
