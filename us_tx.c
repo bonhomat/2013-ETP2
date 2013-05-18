@@ -48,6 +48,7 @@ void TIMER1_IRQHandler(void)
     counter++;
     switch(GUIState)
     {
+      case measure:
       case sburst:
         if (counter == BURST_PULSE_CNT)
         {

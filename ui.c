@@ -123,7 +123,7 @@ void ButtonPB1pressed(void)
     case rburst:                                  //Interrupt in Repetitive Burst
       if (routineactive == true)
       {             
-        //counter = 0;
+        counter = 0;
         TIMER1->CNT = TIMER1_LOAD_VAL;
         TIMER1->CC[2].CTRL = CC2_RUN;
         TIMER1->CC[0].CTRL = DR_CC_RUN;
@@ -149,7 +149,16 @@ void ButtonPB1pressed(void)
 	case measure:                                  //measure
       {
 	  SegmentLCD_Symbol(LCD_SYMBOL_GECKO, 1);   // show Program State ON
-      Measure();
+	  counter = 0;
+      TIMER1->CNT = TIMER1_LOAD_VAL;
+      TIMER1->CC[2].CTRL = CC2_RUN;
+      TIMER1->CC[0].CTRL = DR_CC_RUN;
+      TIMER1->CC[1].CTRL = DR_CC_RUN;
+      InitADC();
+	  Measure();
+      TIMER1->CC[0].CTRL = DL_CC_STOP;            // stop CH1
+      TIMER1->CC[1].CTRL = DH_CC_STOP;            // stop CH2
+      TIMER1->CC[2].CTRL = CC2_STOP;
 	  }
       break; 
 	  
@@ -203,7 +212,7 @@ void STATE_INITIALISER(void)
 	  
     case measure: 
       SegmentLCD_Write("Mess");
-	  InitADC();
+	  //InitADC();
 
       routineactive = false;                  // Set routine as not active
       break;	  
