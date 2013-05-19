@@ -77,6 +77,10 @@
 #define TIMER1_LOAD_VAL   201                         // the value to loat in Counter
                                                       //  of Timer1 for next bust
 
+                                /**< DMA definitions */
+#define DMA_BUFFER_SIZE               256             // x entries in one DMA buffer
+#define DMA_BUFFER_COUNT              4               // x DMA buffers
+
 /*******************************************************************************
  * Enums
  *******************************************************************************/
@@ -99,12 +103,15 @@ typedef enum states
 /*****************************************************************************
  * global variable references
  *****************************************************************************/
-extern menue_state      GUIState;
-extern bool             wakeUp;
-extern uint32_t         counter;
-extern bool             PB1waspressed;
-extern bool             GUIstatechanged;
-extern bool             routineactive;
+extern menue_state  GUIState;
+extern bool         wakeUp;
+extern uint32_t     counter;
+extern bool         PB1waspressed;
+extern bool         GUIstatechanged;
+extern bool         routineactive;
+extern uint16_t     DMA_buffer[DMA_BUFFER_COUNT][DMA_BUFFER_SIZE];
+extern uint16_t     DMA_buffer_last; 
+extern uint16_t     DMA_buffer_current; 
 
 
 #endif

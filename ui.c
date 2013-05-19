@@ -155,7 +155,7 @@ void ButtonPB1pressed(void)
       TIMER1->CC[0].CTRL = DR_CC_RUN;
       TIMER1->CC[1].CTRL = DR_CC_RUN;
       InitADC();
-	  Measure();
+	    Measure();
       TIMER1->CC[0].CTRL = DL_CC_STOP;            // stop CH1
       TIMER1->CC[1].CTRL = DH_CC_STOP;            // stop CH2
       TIMER1->CC[2].CTRL = CC2_STOP;

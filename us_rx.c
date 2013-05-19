@@ -39,8 +39,8 @@
 DMA_CB_TypeDef cbn;                             ///< callback structure
 volatile bool transferActive;                   ///< transfer flag
 #define DMA_TRANSFER_COUNT            40        ///< x DMA transfers timeout for overdistance >60ms,10m
-#define DMA_BUFFER_SIZE               256       ///< x entries in one DMA buffer, T-buffer 1,6ms
-#define DMA_BUFFER_COUNT              4         ///< x DMA buffers >= 2
+//#define DMA_BUFFER_SIZE               256       ///< x entries in one DMA buffer, T-buffer 1,6ms
+//#define DMA_BUFFER_COUNT              4         ///< x DMA buffers >= 2
 uint16_t DMA_buffer[DMA_BUFFER_COUNT][DMA_BUFFER_SIZE];   ///< the data
 uint16_t DMA_buffer_last;                       ///< buffer ready for processing
 uint16_t DMA_buffer_current;                    ///< buffer is currently filled
@@ -325,5 +325,5 @@ void Measure(void)
   
   SegmentLCD_Number(MaxCount);                /* Write value out on display */
   SegmentLCD_Symbol(LCD_SYMBOL_GECKO, 0);     /* show Program State OFF */
-
+  
 }
