@@ -90,7 +90,7 @@ void compareData(void)
 	while ((i<DMA_BUFFER_SIZE)&&(MaxReached==false))
 	{
 		if ((uint16_t)ValBarrier < DMA_buffer[DMA_buffer_last][i]) {  /* Test value in DMA Buffer*/
-			MaxCount = MaxCount+i;				            /* gives back complete count since Start measure*/
+			MaxCount = (MaxCount+i)/10;				        /* gives back complete count since Start measure*/
 			MaxReached = true;				                /* Set Stopflag for ADC transfer*/
 		}
 		else
@@ -149,7 +149,7 @@ void transferComplete(unsigned int channel, bool primary, void *user)
       transferActive = false;                 /* Clearing Flag */
     } 
     
-    if(transfernumber>2)                      /* Do not check Buffer 1 (overspeaking)*/
+    if(transfernumber>1)                      /* Do not check Buffer 1 (overspeaking)*/
     {
       compareData();                          /* Check Buffer values for bursts*/
     }
@@ -323,6 +323,7 @@ void Measure(void)
   INT_Enable();                               /* Activate interupt of DMA */
   DMA_Reset();                                /* set back DMA for next use */
   
+  SegmentLCD_Symbol(LCD_SYMBOL_DP10, 1);      /* Write point out on display */ 
   SegmentLCD_Number(MaxCount);                /* Write value out on display */
   SegmentLCD_Symbol(LCD_SYMBOL_GECKO, 0);     /* show Program State OFF */
   

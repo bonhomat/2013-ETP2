@@ -13,7 +13,6 @@
 #include "dmactrl.h"
 #include "em_leuart.h"
 #include "em_dma.h"
-//#include "em_rtc.h"
 
 #include "globals.h"
 #include "us_rx.h"
@@ -30,8 +29,6 @@
 #define DMA_CHANNEL           0
 #define BUF_MAX               2*DMA_BUFFER_SIZE // was 8 for hello 
 
-
-//char hello[] ={ 'H', 'E', 'L', 'L', 'O',' ', 0,' '};  //to be included by ADC
 
 /* DMA callback structure */
 DMA_CB_TypeDef cb[DMA_CHAN_COUNT];
@@ -81,10 +78,19 @@ DMA_CfgDescr_TypeDef descrCfg =
  *****************************************************************************/ 
 void leuartsend(void)
 {
-
-  /* Set new DMA source address directly in the DMA descriptor */
-  dmaControlBlock->SRCEND = (char*)DMA_buffer[DMA_buffer_last] + BUF_MAX - 1;//  dmaControlBlock->SRCEND = hello + BUF_MAX - 1;    //calculate datalenght replaced hello
-  
+  int i=0;
+  if(i==0)
+  {
+    /* Set new DMA source address directly in the DMA descriptor */
+    dmaControlBlock->SRCEND = (char*)DMA_buffer[DMA_buffer_last] + BUF_MAX - 1; /*Set Pointer to measured data in memory */
+    i=1;
+  }
+  else
+  {
+    /* Set new DMA source address directly in the DMA descriptor */
+    dmaControlBlock->SRCEND = (char*)DMA_buffer[DMA_buffer_current] + BUF_MAX - 1; /*Set Pointer to measured data in memory */
+    i=0;
+  }
   /* Enable DMA wake-up from LEUART0 TX */
   LEUART0->CTRL = LEUART_CTRL_TXDMAWU;
 
@@ -95,6 +101,8 @@ void leuartsend(void)
                     NULL,                  /* Keep destination address */
                     NULL,                  /* Keep source address*/
                     BUF_MAX - 1);          /* Size of buffer minus1 */
+
+ 
 
 }
 
