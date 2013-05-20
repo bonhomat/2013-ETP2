@@ -72,7 +72,7 @@
 
 
                                 /**< Counter definitions */
-#define BURST_PULSE_CNT   80                          // Pulsewith of burst
+#define BURST_PULSE_CNT   40                          // Pulsewith of burst was 80
 #define PERIOD_PULSE_CNT  80000                       // total count in one burst cycle
 #define TIMER1_LOAD_VAL   201                         // the value to loat in Counter
                                                       //  of Timer1 for next bust

@@ -34,6 +34,7 @@
 #define ADC_Port                      gpioPortD ///< DMA Port 
 #define ADC_Pin                       4         ///< DMA Pin 
 #define ValBarrier                    3000      ///< ADC value barrier
+#define offset                        20        ///< Offset fadeout of n.e.x.t.
 
 /* ADC => DMA buffers and related */
 DMA_CB_TypeDef cbn;                             ///< callback structure
@@ -84,9 +85,9 @@ void ADC0_IRQHandler(void) {
  * @brief  Comparing recived data to trigger measurements
  * @par
  *****************************************************************************/
-void compareData(void)
+void compareData(int i)
 {
-    int i=0;									                  /*counts the value into the Buffer for checkup*/
+   // int i=0;									                  /*counts the value into the Buffer for checkup*/
 	while ((i<DMA_BUFFER_SIZE)&&(MaxReached==false))
 	{
 		if ((uint16_t)ValBarrier < DMA_buffer[DMA_buffer_last][i]) {  /* Test value in DMA Buffer*/
@@ -151,7 +152,14 @@ void transferComplete(unsigned int channel, bool primary, void *user)
     
     if(transfernumber>1)                      /* Do not check Buffer 1 (overspeaking)*/
     {
-      compareData();                          /* Check Buffer values for bursts*/
+      if(transfernumber==2)
+      {
+        compareData(offset);                  /* Check Buffer values for bursts afer offset in 2nd Buffer */
+      }
+      else
+      {
+        compareData(0);                       /* Check Buffer values for bursts */
+      }
     }
   }
 }
