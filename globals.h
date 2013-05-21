@@ -28,7 +28,8 @@
 /***************************************************************************//**
  * Global defines
  *******************************************************************************/
-/* Drive port definitions */
+ 
+                /**< Drive port definitions */
 #define DL_PORT     gpioPortD   /**< em_lib name of port used for DL */
 #define DH_PORT     gpioPortD   /**< em_lib name of port used for DH */
 #define DL_PIN      6           /**< Bit/Pin # for DL in above port */
@@ -57,8 +58,15 @@
 
 #define CC2_RUN     TIMER_CC_CTRL_MODE_OUTPUTCOMPARE
 #define CC2_STOP    TIMER_CC_CTRL_MODE_OFF
-                      
-                      
+
+                    /**< SPI port definitions */
+//#define SPI_MOSI    0       // Tx pin = MOSI -> not connected to SPI device!
+#define SPI_MISO    1         // Rx pin = MISO
+#define SPI_SCLK    2         // CLK pin = SCLK
+#define CS_T_SENSOR 3         // CS pin for Temp Sensor
+//Note PortD Pin 3 is used for AutoCS functionality
+#define SPI_PORT    gpioPortD // SPI Port definition
+
                     /**< Button port definitions */
 #define PB0_PORT    gpioPortD           //Port D
 #define PB0_PIN     8                   //Button 0 on Board tg
@@ -66,45 +74,88 @@
 #define PB1_PIN     11                  //Button 1 on Board tg
 
 
-                                /**< Timing definitions */
+                    /**< Timing definitions */
 #define F_HFXO          32000000                      // Crystal oszillator frequency
 #define F_TX            40000                         // 40kHz --> TX frequency
 
 
-                                /**< Counter definitions */
+                    /**< Counter definitions */
 #define BURST_PULSE_CNT   80                          // Pulsewith of burst
 #define PERIOD_PULSE_CNT  80000                       // total count in one burst cycle
 #define TIMER1_LOAD_VAL   201                         // the value to loat in Counter
                                                       //  of Timer1 for next bust
 
+
+
 /*******************************************************************************
  * Enums
  *******************************************************************************/
 
+ 
 /*******************************************************************************
-* @brief Definition of Menue state phases
+* @brief Definition of states for the testing menue
 ********************************************************************************/
-typedef enum states
+typedef enum states_top
 {
-  waiting,                      /**< Waiting */
-  continious,                   /**< State ON */
-  sburst,                       /**< State single Burst */
-  rburst,                       /**< State continious burst*/
-  uart,							/**< State Uart transmit*/
-  init                          /**< Initial state*/
-} menue_state ;
+  init,         /**< Init-State after boot or reset       */
+  distance,     /**< Top-State for change to other menue  */
+  speed,        /**< State on/continious wave             */
+  temp,         /**< State single burst                   */
+  setting,      /**< State continious burst               */
+  offset,       /**< State uart transmit                  */
+  n_of_meas,    /**< State number of measures             */
+  testing,      /**< State testing                        */
+  exit_set,     /**< State exit setting                   */
+} state_main;
+
+/*******************************************************************************
+* @brief Definition of states for the testing menue
+********************************************************************************/
+typedef enum states_sub
+{
+  top,                          /**< Top-State for change to other menue  */
+  continious,                   /**< State on/continious wave             */
+  sburst,                       /**< State single burst                   */
+  rburst,                       /**< State continious burst               */
+  uart,                         /**< State uart transmit                  */
+  exit_test,                    /**< State exit from tests                */
+} state_testing;
 
 
+
+
+/*******************************************************************************
+ * Structs
+ *******************************************************************************/
+
+ 
+ /*******************************************************************************
+* @brief Definition of the temperature read return object
+********************************************************************************/
+typedef struct        // Represents temperature data read from sensor
+{                     // in different formats
+  int16_t raw ;       // temp value in 1/16 degrees celsius
+  int16_t degrees ;   // Integer value in degrees celsius
+  uint8_t fraction ;  // Two digit fractional value
+  bool valid ;        // True if conversion terminated successfully 
+} TempData_t;
+ 
+
+ 
+ 
 /*****************************************************************************
  * global variable references
  *****************************************************************************/
-extern menue_state      GUIState;
+extern state_testing    SM_Testing;
+extern state_main       MM_Entry;
 extern bool             wakeUp;
 extern uint32_t         counter;
+extern bool             PB0waspressed;
 extern bool             PB1waspressed;
-extern bool             GUIstatechanged;
+extern bool             GUI_StateChange;
+extern bool             RoutineStateChng;
 extern bool             routineactive;
-
+extern TempData_t       TempData;
 
 #endif
 

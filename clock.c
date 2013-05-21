@@ -10,7 +10,6 @@
 #include "em_system.h"
 #include "em_timer.h"
 #include "segmentlcd.h"
-//#include "em_chip.h"
 
 #include "globals.h"
 

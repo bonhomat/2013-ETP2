@@ -179,7 +179,7 @@ void setupLeuartDma(void)
  *
  *****************************************************************************/
 
-void initUart(void)
+void InitUart(void)
 {
 	/* Start LFXO, and use LFXO for low-energy modules */
 	CMU_ClockSelectSet(cmuClock_LFB, cmuSelect_CORELEDIV2);
@@ -197,7 +197,7 @@ void initUart(void)
 	setupLeuartDma();                           /* setup Uart DMA*/
 
 }
-void sendUart(void)
+void SendUart(void)
 {
 
 	

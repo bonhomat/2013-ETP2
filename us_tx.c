@@ -46,15 +46,17 @@ void TIMER1_IRQHandler(void)
   if(intFlags & TIMER_IF_CC2)
   {
     counter++;
-    switch(GUIState)
+    switch(SM_Testing)
     {
       case sburst:
-        if (counter == BURST_PULSE_CNT)
+        if (counter >= BURST_PULSE_CNT)
         {
           TIMER1->CC[0].CTRL = DL_CC_STOP;            // stop CH1
           TIMER1->CC[1].CTRL = DH_CC_STOP;            // stop CH2
           TIMER1->CC[2].CTRL = CC2_STOP;
-          SegmentLCD_Symbol(LCD_SYMBOL_GECKO, 0);     // show Program State OFF
+          // SegmentLCD_Symbol(LCD_SYMBOL_GECKO, 0);     // show Program State OFF
+          routineactive = false;
+          RoutineStateChng = true;
         }
         break;
       
@@ -64,7 +66,7 @@ void TIMER1_IRQHandler(void)
           TIMER1->CC[0].CTRL = DL_CC_STOP;          // stop CH1
           TIMER1->CC[1].CTRL = DH_CC_STOP;          // stop CH2
         }
-        else if (GUIState == rburst && counter == PERIOD_PULSE_CNT)
+        else if (SM_Testing == rburst && counter == PERIOD_PULSE_CNT)
         {
           // after a cycle restart the cycle again
           counter = 0;

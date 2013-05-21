@@ -9,11 +9,12 @@
 #include "em_system.h"
 #include "em_timer.h"
 #include "segmentlcd.h"
-//#include "em_chip.h"
 
 #include "globals.h"
 #include "us_tx.h"
 #include "us_uart.h"
+#include "temperature.h"
+
 
 /*******************************************************************************
  **************************   DATA DEFINITIONS   *******************************
@@ -23,10 +24,14 @@
 /*****************************************************************************
  * data definitions
  *****************************************************************************/
-menue_state GUIState  = waiting;     /**< Define current GUIState  */
-bool   routineactive  = false;        /**< ON/OFF of functions in States toggled by PB1*/  
-bool GUIstatechanged  = false;       /**< */
-bool   PB1waspressed  = false;       /**< */
+state_main    MM_Entry    = init;     /**< GUI-State for main menue     */
+state_testing SM_Testing  = top;      /**< GUI-State sub menue testing  */
+
+bool  routineactive     = false;      /**< ON/OFF of functions in States toggled by PB1*/  
+bool  GUI_StateChange   = false;      /**< */
+bool  RoutineStateChng  = false;      /**< */
+bool  PB0waspressed     = false;      /**< */
+bool  PB1waspressed     = false;      /**< */
 
 
 
@@ -85,16 +90,30 @@ void InitButtons(void)
 
 
 
-/**************************************************************************//**
- * @brief Button PB1 pressed Routine
- * 
+
+/******************************************************************************
+ * @brief Actions for SM_Testing on PB1 press
+ *
  *****************************************************************************/
-void ButtonPB1pressed(void)
+void SM_Testing_PB1pressed(void)
 {
-  routineactive = !routineactive;                 // Toggle Run/ Stop variable
-  
-  switch (GUIState)
+  if(SM_Testing != top && SM_Testing != exit_test)
   {
+    routineactive = !routineactive;               // Toggle Run/ Stop variable
+    RoutineStateChng = true;
+  }
+  else
+  {
+    GUI_StateChange = true;
+  }
+  
+  switch (SM_Testing)
+  {
+    case top:
+      SM_Testing = continious;
+      SegmentLCD_EnergyMode(2,1);
+      break;
+      
     case continious:                              // Interrupt in continious State
       if (routineactive == true)
       {
@@ -107,11 +126,11 @@ void ButtonPB1pressed(void)
         TIMER1->CC[0].CTRL = DL_CC_STOP;          // Stop Output on TX Module CH1
         TIMER1->CC[1].CTRL = DH_CC_STOP;          // Stop Output on TX Module CH2
       }
-      SegmentLCD_Symbol(LCD_SYMBOL_GECKO, (int)routineactive);  // show Program State
+      SegmentLCD_EnergyMode(2,1);
       break;
 
     case sburst:                                  //Interrupt in Burst State
-      SegmentLCD_Symbol(LCD_SYMBOL_GECKO, 1);     // show Program State ON
+      routineactive = true;
       //counter = 0;
       TIMER1->CNT = TIMER1_LOAD_VAL;
       TIMER1->CC[2].CTRL = CC2_RUN;
@@ -128,27 +147,84 @@ void ButtonPB1pressed(void)
         TIMER1->CC[0].CTRL = DR_CC_RUN;
         TIMER1->CC[1].CTRL = DR_CC_RUN;
       }
-
       else
       {
         TIMER1->CC[0].CTRL = DL_CC_STOP;          // Stop Output on TX Module CH1
         TIMER1->CC[1].CTRL = DH_CC_STOP;          // Stop Output on TX Module CH2
         TIMER1->CC[2].CTRL = CC2_STOP;
       }
-      SegmentLCD_Symbol(LCD_SYMBOL_GECKO, (int)routineactive);  // show Program State
       break;
     
-	case uart:                                  //send data
-      {
-	  SegmentLCD_Symbol(LCD_SYMBOL_GECKO, 1);   // show Program State ON
-      sendUart();
-	  }
-      break;      
-    
-	default:
-      SegmentLCD_Write("ERROR");                   //Interrupt in all other cases
+    case uart:                                    //send data
+      routineactive = true;
+      SendUart();
       break;
-  }  
+      
+    case exit_test:
+      SM_Testing = top;
+      routineactive = false;
+      SegmentLCD_EnergyMode(2,0);
+      break;
+      
+    default:
+      SegmentLCD_Write("ERROR");                //Interrupt in all other cases
+      break;
+  }
+}
+
+
+
+
+
+
+/**************************************************************************//**
+ * @brief Button PB1 pressed Routine
+ * 
+ *****************************************************************************/
+void ButtonPB1pressed(void)
+{
+  switch (MM_Entry)
+  {
+    case distance:
+      // measure distance
+      break;
+      
+    case speed:
+      // measure speed
+      break;
+      
+    case temp:
+      // measure temperature
+      TempData = getTemperature();
+      SegmentLCD_Number(TempData.degrees*100+TempData.fraction);
+      break;
+      
+    case setting:
+      SegmentLCD_EnergyMode(1,1);
+      MM_Entry = offset;
+      GUI_StateChange = true;
+      break;
+      
+    case offset:
+      // change the offset
+      TempData = getTemperature();
+      break;
+      
+    case n_of_meas:
+      // change number of measurements
+      break;
+      
+    case testing:
+      SM_Testing_PB1pressed();
+      break;
+      
+    case exit_set:
+      MM_Entry = distance;
+      GUI_StateChange = true;
+      SegmentLCD_EnergyMode(1,0);
+      break;
+  }
+  
 }// END: ButtonPB1pressed
 
 
@@ -161,78 +237,234 @@ void ButtonPB1pressed(void)
  *****************************************************************************/
 void STATE_INITIALISER(void)
 {
-  switch (GUIState)
-  {   
-    case continious:
-      //InitTimer1() ;                          // Initialize timer 0
-      SegmentLCD_Write("CW >>>");
-      TIMER1->CC[0].CTRL = DL_CC_STOP;        // Stop Output on TX Module CH1
-      TIMER1->CC[1].CTRL = DH_CC_STOP;        // Stop Output on TX Module CH2
-      TIMER1->CC[2].CTRL = CC2_STOP;
-      routineactive = false;                  // Set routine as not active
+  switch (MM_Entry)
+  {
+    case init:
+      SegmentLCD_Write("Ready");
       break;
       
-    case sburst:
-      //InitTimer1() ;                          // Initialize timer 0
-      SegmentLCD_Write("Burst");
-      TIMER1->CC[0].CTRL = DL_CC_STOP;
-      TIMER1->CC[1].CTRL = DH_CC_STOP;
-      TIMER1->CC[2].CTRL = CC2_STOP;
-      routineactive = false;                  // Set routine as not active
+    case distance:
+      SegmentLCD_Write("DIST  m");
       break;
       
-    case rburst: 
-      //InitTimer1() ;                          // Initialize timer 0
-      SegmentLCD_Write("R-Burst");
-      routineactive = false;                  // Set routine as not active
+    case speed:
+      SegmentLCD_Write("SPEED");
       break;
+      
+    case temp:
+      InitTSensor( T_SENS_ACTIVE );      // Put temp sensor into shutdown mode
+      SegmentLCD_Write("AIRTemp");
+      while (TempData.valid == 0)
+      {
+        TempData = getTemperature();
+      }
+      SegmentLCD_Number(TempData.degrees*100+TempData.fraction);
+      SegmentLCD_Symbol(LCD_SYMBOL_DEGC,1);
+      SegmentLCD_Symbol(LCD_SYMBOL_DP10,1);
+      break;
+      
+    case setting:
+      InitTSensor( T_SENS_SHUTDOWN );      // Put temp sensor into shutdown mode
+      SegmentLCD_NumberOff();
+      SegmentLCD_Symbol(LCD_SYMBOL_DEGC,0);
+      SegmentLCD_Symbol(LCD_SYMBOL_DP10,0);
+      SegmentLCD_Write("Set   +");
+      break;
+      
+    case offset:
+      SegmentLCD_Write("OFFSET");
+      break;
+      
+    case n_of_meas:
+      SegmentLCD_Write("NofMeas");
+      break;
+      
+    case testing:
+      switch (SM_Testing)
+      {   
+        case top:
+          SegmentLCD_Write("Tests +");
+          break;
+          
+        case continious:
+          InitTimer1() ;                          // Initialize timer 1
+          SegmentLCD_Write("CW >>>");
+          TIMER1->CC[0].CTRL = DL_CC_STOP;        // Stop Output on TX Module CH1
+          TIMER1->CC[1].CTRL = DH_CC_STOP;        // Stop Output on TX Module CH2
+          TIMER1->CC[2].CTRL = CC2_STOP;
+          routineactive = false;                  // Set routine as not active
+          break;
+          
+        case sburst:
+          InitTimer1() ;                          // Initialize timer 1
+          SegmentLCD_Write("Burst");
+          TIMER1->CC[0].CTRL = DL_CC_STOP;
+          TIMER1->CC[1].CTRL = DH_CC_STOP;
+          TIMER1->CC[2].CTRL = CC2_STOP;
+          routineactive = false;                  // Set routine as not active
+          break;
+          
+        case rburst: 
+          InitTimer1() ;                          // Initialize timer 1
+          SegmentLCD_Write("R-Burst");
+          routineactive = false;                  // Set routine as not active
+          break;
 
-	case uart: 
-      SegmentLCD_Write("Uart");
-	  initUart();			                  // Initialise Uart
-      routineactive = false;                  // Set routine as not active
+        case uart: 
+          SegmentLCD_Write("Uart");
+          InitUart();			                  // Initialise Uart
+          routineactive = false;                  // Set routine as not active
+          break;
+
+        case exit_test: 
+          SegmentLCD_Write("Tests X");
+          routineactive = false;                  // Set routine as not active
+          break;
+          
+        default:
+          SegmentLCD_Write("missing");
+          routineactive = false;                  // Set routine as not active
+      }
+      break;
+    
+    case exit_set:
+      SegmentLCD_Write("Set   X");
       break;
       
     default:
-      SegmentLCD_Write("ERROR");
-      routineactive = false;                  // Set routine as not active
-      
+      SegmentLCD_Write("missing");
   }
+  
   SegmentLCD_Symbol(LCD_SYMBOL_GECKO, (int)routineactive);  // show Program State
 }// END: STATE_INITIALISER
 
 
 
 
+
+
 /******************************************************************************
- * @brief Changes to the next State in the GUI
+ * @brief Changes to the next state in the main level GUI
  *
  *****************************************************************************/
- void GUIState_Switch(void)
+ void ButtonPB0pressed(void)
 {
-  switch (GUIState)
+  switch (MM_Entry)
   {
-    case continious: 
-      GUIState = sburst;
+    case init:
+      MM_Entry = distance;
+      GUI_StateChange = true;
       break;
-    
-    case sburst:
-      GUIState = rburst;
+      
+    case distance:
+      MM_Entry = speed;
+      GUI_StateChange = true;
       break;
-    
-    case rburst: 
-      GUIState = uart;
+      
+    case speed:
+      MM_Entry = temp;
+      GUI_StateChange = true;
       break;
-    
-	case uart: 
-      GUIState = continious;
+      
+    case temp:
+      MM_Entry = setting;
+      GUI_StateChange = true;
       break;
-	
+      
+    case setting:
+      MM_Entry = distance;
+      GUI_StateChange = true;
+      break;
+      
+    case offset:
+      MM_Entry = n_of_meas;
+      GUI_StateChange = true;
+      break;
+      
+    case n_of_meas:
+      MM_Entry = testing;
+      GUI_StateChange = true;
+      break;
+      
+    case testing:
+      switch (SM_Testing) // change sub-menue
+      {
+        case top:
+          MM_Entry = exit_set;
+          break;
+          
+        case continious:
+          SM_Testing = sburst;
+          break;
+        
+        case sburst:
+          SM_Testing = rburst;
+          break;
+        
+        case rburst:
+          SM_Testing = uart;
+          break;
+        
+        case uart:
+          SM_Testing = exit_test;
+          break;
+        
+        case exit_test:
+          SM_Testing = continious;
+          break;
+      
+        default:
+          SM_Testing = top;
+      } //End: switch
+      GUI_StateChange = true;
+      break;
+      
+    case exit_set:
+      MM_Entry = offset;
+      GUI_StateChange = true;
+      break;
+      
     default:
-      GUIState = continious;
-  } //End: switch
+      MM_Entry = init;
+      GUI_StateChange = true;
+  }
 }
 
+
+
+/******************************************************************************
+ * @brief UI_Main handels main statemachine changes
+ * 
+ *****************************************************************************/
+void UI_Main(void)
+{
+  if(GUI_StateChange)
+  {
+    STATE_INITIALISER();
+    GUI_StateChange = false;
+  }
+  
+  if(RoutineStateChng)
+  {
+    SegmentLCD_Symbol(LCD_SYMBOL_GECKO, (int)routineactive);  // show Program State
+    RoutineStateChng = false;
+  }
+
+  if(PB1waspressed)
+  {
+    ButtonPB1pressed();
+    PB1waspressed = false;
+    wakeUp = true;
+  }
+  
+  
+  if(PB0waspressed)
+  {
+    ButtonPB0pressed();
+    PB0waspressed = false;
+    wakeUp = true;
+  }
+}
 
 
 
@@ -252,15 +484,16 @@ void GPIO_EVEN_IRQHandler(void)
   
   if(gp_flags0)                                 //Use only PB0 interrupt
   {
-    GUIState_Switch();
     
+    PB0waspressed = true;
     GPIO_IntClear(gp_flags0);                    // Clear the interrupt flag PB0
-    GUIstatechanged = true;
     
     /* Do not go into EM1 mode after return from ISR */
     wakeUp = true;
   }
 } // END: GPIO_EVEN_IRQHandler
+
+
 
 /******************************************************************************
  * @brief Pushbutton 1 GPIO_ODD_IRQHandler
@@ -276,5 +509,12 @@ void GPIO_ODD_IRQHandler(void)
   {
     PB1waspressed = true;
     GPIO_IntClear(gp_flags1);                     // Clear the interrupt flag PB1
+    
+    /* Do not go into EM1 mode after return from ISR */
+    wakeUp = true;
   }
 }// End: GPIO_ODD_IRQHandler
+
+
+
+

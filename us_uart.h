@@ -25,13 +25,13 @@
  * @brief Initializes Uart interface 
  * 
  *****************************************************************************/
-extern void initUart(void);
+extern void InitUart(void);
 
 /**************************************************************************//**
  * @brief function for transmitting over serial interface
  * 
  *****************************************************************************/
-extern void sendUart(void);
+extern void SendUart(void);
 
 
 #endif
