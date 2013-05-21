@@ -100,7 +100,7 @@ void SM_Testing_PB1pressed(void)
 {
   if(SM_Testing != top && SM_Testing != exit_test)
   {
-    routineactive = !routineactive;               // Toggle Run/ Stop variable
+    routineactive = !routineactive;             // Toggle Run/ Stop variable
     RoutineStateChng = true;
   }
   else
@@ -115,22 +115,22 @@ void SM_Testing_PB1pressed(void)
       SegmentLCD_EnergyMode(2,1);
       break;
 
-    case continious:                              // Interrupt in continious State
+    case continious:                            // Interrupt in continious State
       if (routineactive == true)
       {
         TIMER1->CNT = TIMER1_LOAD_VAL;
-        TIMER1->CC[0].CTRL = DR_CC_RUN;           // RUN Output on TX Module CH1
-        TIMER1->CC[1].CTRL = DR_CC_RUN;           // RUN Output on TX Module CH2
+        TIMER1->CC[0].CTRL = DR_CC_RUN;         // RUN Output on TX Module CH1
+        TIMER1->CC[1].CTRL = DR_CC_RUN;         // RUN Output on TX Module CH2
       }
       else
       {
-        TIMER1->CC[0].CTRL = DL_CC_STOP;          // Stop Output on TX Module CH1
-        TIMER1->CC[1].CTRL = DH_CC_STOP;          // Stop Output on TX Module CH2
+        TIMER1->CC[0].CTRL = DL_CC_STOP;        // Stop Output on TX Module CH1
+        TIMER1->CC[1].CTRL = DH_CC_STOP;        // Stop Output on TX Module CH2
       }
       SegmentLCD_EnergyMode(2,1);
       break;
 
-    case sburst:                                  //Interrupt in Burst State
+    case sburst:                                //Interrupt in Burst State
       routineactive = true;
       counter = 0;
       TIMER1->CNT = TIMER1_LOAD_VAL;
@@ -139,7 +139,7 @@ void SM_Testing_PB1pressed(void)
       TIMER1->CC[1].CTRL = DR_CC_RUN;
       break;
 
-    case rburst:                                  //Interrupt in Repetitive Burst
+    case rburst:                                //Interrupt in Repetitive Burst
       if (routineactive == true)
       {
         counter = 0;
@@ -150,15 +150,24 @@ void SM_Testing_PB1pressed(void)
       }
       else
       {
-        TIMER1->CC[0].CTRL = DL_CC_STOP;          // Stop Output on TX Module CH1
-        TIMER1->CC[1].CTRL = DH_CC_STOP;          // Stop Output on TX Module CH2
+        TIMER1->CC[0].CTRL = DL_CC_STOP;        // Stop Output on TX Module CH1
+        TIMER1->CC[1].CTRL = DH_CC_STOP;        // Stop Output on TX Module CH2
         TIMER1->CC[2].CTRL = CC2_STOP;
       }
       break;
 
-    case measure:                                  //measure
+    case measure:                               //measure
       {
       SegmentLCD_Symbol(LCD_SYMBOL_GECKO, 1);   // show Program State ON
+      //DMA_Clr_Buf();
+      for(int i = 0; i < DMA_BUFS; i++)
+      {
+        for(int j=0; j < DMA_BUF_SIZE; j++)
+        {
+          DMA_buf[i][j] = 0;
+        }
+      }
+
       counter = 0;
       TIMER1->CNT = TIMER1_LOAD_VAL;
       TIMER1->CC[2].CTRL = CC2_RUN;
@@ -166,13 +175,13 @@ void SM_Testing_PB1pressed(void)
       TIMER1->CC[1].CTRL = DR_CC_RUN;
       InitADC();
       Measure();
-      TIMER1->CC[0].CTRL = DL_CC_STOP;            // stop CH1
-      TIMER1->CC[1].CTRL = DH_CC_STOP;            // stop CH2
+      TIMER1->CC[0].CTRL = DL_CC_STOP;          // stop CH1
+      TIMER1->CC[1].CTRL = DH_CC_STOP;          // stop CH2
       TIMER1->CC[2].CTRL = CC2_STOP;
       }
       break;
 
-    case uart:                                    //send data
+    case uart:                                  //send data
       routineactive = true;
       SendUart();
       break;

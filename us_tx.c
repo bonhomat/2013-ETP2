@@ -50,7 +50,7 @@ void TIMER1_IRQHandler(void)
     {
       case measure:
       case sburst:
-        if (counter >= BURST_PULSE_CNT)
+        if (counter == BURST_PULSE_CNT || counter == (BURST_PULSE_CNT + 1) )
         {
           TIMER1->CC[0].CTRL = DL_CC_STOP;            // stop CH1
           TIMER1->CC[1].CTRL = DH_CC_STOP;            // stop CH2

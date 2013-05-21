@@ -28,8 +28,7 @@
 extern void InitADC(void);
 
 /**************************************************************************//**
- * @brief Start Measuring routine give back Maxcount as top reaced Value
- * @par MAXcount
+ * @brief Start Measuring routine
  * 
  *****************************************************************************/
 extern void Measure(void);

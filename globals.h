@@ -86,8 +86,9 @@
                                 //  of Timer1 for next bust
 
                     /**< DMA definitions */
-#define DMA_BUF_SIZE      256   // x entries in one DMA buffer
-#define DMA_BUFS          4     // x DMA buffers
+#define DMA_TRANSFER_COUNT  60 //40 ///< x DMA transfers timeout for overdistance >60ms,10m
+#define DMA_BUF_SIZE        256     // x entries in one DMA buffer
+#define DMA_BUFS            4       // x DMA buffers
 
 /*******************************************************************************
  * Enums
@@ -162,6 +163,7 @@ extern TempData_t     TempData;
 extern uint16_t       DMA_buf[DMA_BUFS][DMA_BUF_SIZE];
 extern uint16_t       DMA_buf_last; 
 extern uint16_t       DMA_buf_current; 
+extern uint16_t       MaxCount;
 
 
 #endif

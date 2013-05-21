@@ -33,24 +33,23 @@
 #define DMA_CHANNEL_ADC           1         ///< DMA channel for ADC
 #define ADC_Port                  gpioPortD ///< DMA Port
 #define ADC_Pin                   4         ///< DMA Pin
-#define ValBarrier                3000      ///< ADC value barrier
-#define StartCmp                  20        ///< StartCmp fadeout of n.e.x.t.
+#define RX_BarrierVal             3100      ///< ADC value barrier start
+#define RX_BarrierDec             8         ///< ADC value barrier decrement per buffer
+#define StartCmp                  50        ///< StartCmp fadeout of n.e.x.t.
 
 /* ADC => DMA buffers and related */
 DMA_CB_TypeDef cbn;                         ///< callback structure
 volatile bool transferActive;               ///< transfer flag
-#define DMA_TRANSFER_COUNT        40        ///< x DMA transfers timeout for overdistance >60ms,10m
-//#define DMA_BUF_SIZE            256       ///< x entries in one DMA buffer, T-buffer 1,6ms
-//#define DMA_BUFS                4         ///< x DMA buffers >= 2
 uint16_t DMA_buf[DMA_BUFS][DMA_BUF_SIZE];   ///< the data
 uint16_t DMA_buf_last;                      ///< buffer ready for processing
 uint16_t DMA_buf_current;                   ///< buffer is currently filled
 uint16_t DMA_buf_next;                      ///< buffer will be used next
 
 uint16_t averageValue[DMA_TRANSFER_COUNT];  ///< processed data
-bool MaxReached         = false;            ///< stops ADC when Max reached
+bool     MaxReached     = false;            ///< stops ADC when Max reached
 uint16_t MaxCount       = 0;                ///< gives back the time to reach max ADC
 uint16_t transfernumber = 0;                ///< number of transfered buffers
+uint16_t BarrierLvl     = 0;                ///< barrier level
 
  /**************************************************************************//**
  * @brief Calculate average value of one DMA-buffer
@@ -87,18 +86,18 @@ void ADC0_IRQHandler(void) {
  *****************************************************************************/
 void compareData(int i)
 {
-   // int i=0;                                                    /*counts the value into the Buffer for checkup*/
-  while ((i<DMA_BUF_SIZE)&&(MaxReached==false))
+   // int i=0;                          /*counts the value into the Buffer for checkup*/
+  uint16_t* t_val = &(DMA_buf[DMA_buf_last][i]);
+  for( ; i < DMA_BUF_SIZE; i++ )
   {
-    if ((uint16_t)ValBarrier < DMA_buf[DMA_buf_last][i]) {  /* Test value in DMA Buffer*/
-      MaxCount = (MaxCount+i)/10;                                 /* gives back complete count since Start measure*/
-      MaxReached = true;                                          /* Set Stopflag for ADC transfer*/
-    }
-    else
-    {
-      i++;
+    if ( *t_val++ > BarrierLvl ) {      /* Test value in DMA Buffer*/
+      MaxCount = transfernumber*256;    /* Calculate numbers of value in full buffers*/
+      MaxCount = (MaxCount+i)/10;       /* calculte count since measure start*/
+      MaxReached = true;                /* Set Stopflag for ADC transfer*/
+      break;
     }
   }
+  BarrierLvl = BarrierLvl - RX_BarrierDec;
 
 }
 
@@ -120,10 +119,7 @@ void transferComplete(unsigned int channel, bool primary, void *user)
   else                                        /* Continiue when max not reaced*/
   {
     (void) user;
-
-    MaxCount = transfernumber*256;            /* Calculate numbers of value in full buffers*/
     transfernumber++;                         /* Keeping track of the number of transfered buffers */
-
 
 
     /* numbers of DMA buffers in use */
@@ -146,12 +142,15 @@ void transferComplete(unsigned int channel, bool primary, void *user)
     }
     else
     {
-      TIMER_Enable(TIMER0, false);      /* Stopping ADC by stopping TIMER0 */
-      transferActive = false;           /* Clearing Flag */
+      /* exit too many buffers already written, no echo */
+      TIMER_Enable(TIMER0, false);          /* Stopping ADC by stopping TIMER0 */
+      transferActive = false;               /* Clearing Flag */
+      MaxCount       = (transfernumber-1)*256;  /* Calculate numbers of value in full buffers*/
     }
 
     if(transfernumber > 1)              /* Do not check Buffer 1 (overspeaking)*/
     {
+#if 1
       if(transfernumber == 2)
       {
         compareData(StartCmp);          /* Check Buffer values for bursts afer StartCmp in 2nd Buffer */
@@ -160,16 +159,17 @@ void transferComplete(unsigned int channel, bool primary, void *user)
       {
         compareData(0);                 /* Check Buffer values for bursts */
       }
+#endif
     }
   }
 }
 
 
 /**************************************************************************//**
- * @brief  Enabling gpio Ports
+ * @brief  Enabling GPIO ports
  * @par
  *****************************************************************************/
-void SetupGpio(void)
+void SetupGPIO(void)
 {
   GPIO_PinModeSet(ADC_Port, ADC_Pin, gpioModeInput, 1); /*Setup Pin of ADC*/
 }
@@ -197,7 +197,7 @@ void setupCmu(void)
  * @brief Configure DMA for Ping-pong ADC to RAM Transfer
  * @par
  *****************************************************************************/
-void setupDma(void)
+void setupDMA(void)
 {
   /* Setup config of DMA */
   DMA_Init_TypeDef        dmaInit;
@@ -296,11 +296,11 @@ void setupAdc(void)
 void InitADC(void)
 {
   /* Setup the physical Gpio port for ADC*/
-  SetupGpio();
+  SetupGPIO();
   /* Configuring clocks in the Clock Management Unit (CMU) */
   setupCmu();
   /* Configure DMA transfer from ADC to RAM using ping-pong */
-  setupDma();
+  setupDMA();
   /* Configura ADC Sampling */
   setupAdc();
 
@@ -312,11 +312,12 @@ void InitADC(void)
 void Measure(void)
 {
   /* Set variables on default */
-  MaxReached     = false;                 /* True in case of value higher than ValBarrier*/
+  MaxReached     = false;                 /* True in case of value higher than the barrier*/
   MaxCount       = 0;                     /* counts the effective value of captured data*/
   transfernumber = 0;                     /* counts changes of buffers*/
   transferActive = true;                  /* False when transfernumber>DMA_TRANSFER_COUNT or MaxReached true*/
-
+  BarrierLvl     = RX_BarrierVal;
+  
   /* Configure TIMER to trigger ADC sampling rate */
   TIMER_Enable(TIMER0, true);             /* Start ADC by starting TIMER0 */
 

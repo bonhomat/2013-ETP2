@@ -29,6 +29,8 @@
 #define DMA_CHANNEL           0
 #define BUF_MAX               2*DMA_BUF_SIZE // was 8 for hello 
 
+uint16_t  uart_buf_sent = 0;
+uint16_t  buf_to_send = 0;
 
 /* DMA callback structure */
 DMA_CB_TypeDef cb[DMA_CHAN_COUNT];
@@ -78,19 +80,19 @@ DMA_CfgDescr_TypeDef descrCfg =
  *****************************************************************************/ 
 void leuartsend(void)
 {
-  int i=0;
-  if(i==0)
+  uart_buf_sent = 0;
+  
+  if ( MaxCount > 3*DMA_BUF_SIZE )
   {
-    /* Set new DMA source address directly in the DMA descriptor */
-    dmaControlBlock->SRCEND = (char*)DMA_buf[DMA_buf_last] + BUF_MAX - 1; /*Set Pointer to measured data in memory */
-    i=1;
+    buf_to_send = (MaxCount/DMA_BUF_SIZE - 1) % DMA_BUFS;
   }
   else
   {
-    /* Set new DMA source address directly in the DMA descriptor */
-    dmaControlBlock->SRCEND = (char*)DMA_buf[DMA_buf_current] + BUF_MAX - 1; /*Set Pointer to measured data in memory */
-    i=0;
+    buf_to_send = 0;
   }
+  /* Set new DMA source address directly in the DMA descriptor */
+  dmaControlBlock->SRCEND = (char*)DMA_buf[buf_to_send] + BUF_MAX - 1; /*Set Pointer to measured data in memory */
+  
   /* Enable DMA wake-up from LEUART0 TX */
   LEUART0->CTRL = LEUART_CTRL_TXDMAWU;
 
@@ -101,8 +103,6 @@ void leuartsend(void)
                     NULL,                  /* Keep destination address */
                     NULL,                  /* Keep source address*/
                     BUF_MAX - 1);          /* Size of buffer minus1 */
-
- 
 
 }
 
@@ -116,12 +116,30 @@ void leuartsend(void)
  ******************************************************************************/
 void dmaTransferDone(unsigned int channel, bool primary, void *user)
 {
-  (void) channel;
-  (void) primary;
-  (void) user;
+  if (uart_buf_sent < 2)
+  {
+    uart_buf_sent++;
+    buf_to_send = (buf_to_send + 1) % DMA_BUFS;
+    /* Set new DMA source address directly in the DMA descriptor */
+    dmaControlBlock->SRCEND = (char*)DMA_buf[buf_to_send] + BUF_MAX - 1; /*Set Pointer to measured data in memory */
   
-  /* Disable DMA wake-up from LEUART0 TX */
-  LEUART0->CTRL &= ~LEUART_CTRL_TXDMAWU;
+    /* (Re)starting the transfer. Using Basic Mode */
+    DMA_ActivateBasic(DMA_CHANNEL,           /* Activate channel selected */
+                      true,                  /* Use primary descriptor */
+                      false,                 /* No DMA burst */
+                      NULL,                  /* Keep destination address */
+                      NULL,                  /* Keep source address*/
+                      BUF_MAX - 1);          /* Size of buffer minus1 */
+  }
+  else
+  {
+    (void) channel;
+    (void) primary;
+    (void) user;
+    
+    /* Disable DMA wake-up from LEUART0 TX */
+    LEUART0->CTRL &= ~LEUART_CTRL_TXDMAWU;
+  }
 }
 
 
