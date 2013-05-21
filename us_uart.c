@@ -27,7 +27,7 @@
  /* DEFINES */
 
 #define DMA_CHANNEL           0
-#define BUF_MAX               2*DMA_BUFFER_SIZE // was 8 for hello 
+#define BUF_MAX               2*DMA_BUF_SIZE // was 8 for hello 
 
 
 /* DMA callback structure */
@@ -82,13 +82,13 @@ void leuartsend(void)
   if(i==0)
   {
     /* Set new DMA source address directly in the DMA descriptor */
-    dmaControlBlock->SRCEND = (char*)DMA_buffer[DMA_buffer_last] + BUF_MAX - 1; /*Set Pointer to measured data in memory */
+    dmaControlBlock->SRCEND = (char*)DMA_buf[DMA_buf_last] + BUF_MAX - 1; /*Set Pointer to measured data in memory */
     i=1;
   }
   else
   {
     /* Set new DMA source address directly in the DMA descriptor */
-    dmaControlBlock->SRCEND = (char*)DMA_buffer[DMA_buffer_current] + BUF_MAX - 1; /*Set Pointer to measured data in memory */
+    dmaControlBlock->SRCEND = (char*)DMA_buf[DMA_buf_current] + BUF_MAX - 1; /*Set Pointer to measured data in memory */
     i=0;
   }
   /* Enable DMA wake-up from LEUART0 TX */
@@ -191,26 +191,26 @@ void setupLeuartDma(void)
 
 void InitUart(void)
 {
-	/* Start LFXO, and use LFXO for low-energy modules */
-	CMU_ClockSelectSet(cmuClock_LFB, cmuSelect_CORELEDIV2);
-	CMU_ClockDivSet(cmuClock_LEUART0, cmuClkDiv_2 );
-	CMU_ClockSelectSet(cmuClock_HF, cmuSelect_HFXO);
-	
-	/* Enabling clocks, all other remain disabled */
-	CMU_ClockEnable(cmuClock_CORELE, true);     /* Enable CORELE clock */
-	CMU_ClockEnable(cmuClock_CORE, true);       /* Enable CORE clock*/
-	CMU_ClockEnable(cmuClock_HFPER, true);      /* Enable HF Peripheral*/
-	CMU_ClockEnable(cmuClock_DMA, true);        /* Enable DMA clock */
-	CMU_ClockEnable(cmuClock_GPIO, true);       /* Enable GPIO clock */	//done by Main?
-	CMU_ClockEnable(cmuClock_LEUART0, true);    /* Enable LEUART0 */
-	initLeuart();								                /* setup Uart IO*/ 
-	setupLeuartDma();                           /* setup Uart DMA*/
+  /* Start LFXO, and use LFXO for low-energy modules */
+  CMU_ClockSelectSet(cmuClock_LFB, cmuSelect_CORELEDIV2);
+  CMU_ClockDivSet(cmuClock_LEUART0, cmuClkDiv_2 );
+  CMU_ClockSelectSet(cmuClock_HF, cmuSelect_HFXO);
+
+  /* Enabling clocks, all other remain disabled */
+  CMU_ClockEnable(cmuClock_CORELE, true);     /* Enable CORELE clock */
+  CMU_ClockEnable(cmuClock_CORE, true);       /* Enable CORE clock*/
+  CMU_ClockEnable(cmuClock_HFPER, true);      /* Enable HF Peripheral*/
+  CMU_ClockEnable(cmuClock_DMA, true);        /* Enable DMA clock */
+  CMU_ClockEnable(cmuClock_GPIO, true);       /* Enable GPIO clock */   //done by Main?
+  CMU_ClockEnable(cmuClock_LEUART0, true);    /* Enable LEUART0 */
+  initLeuart();                               /* setup Uart IO*/ 
+  setupLeuartDma();                           /* setup Uart DMA*/
 
 }
 void SendUart(void)
 {
 
-	
-	leuartsend();
 
-}	
+  leuartsend();
+
+}

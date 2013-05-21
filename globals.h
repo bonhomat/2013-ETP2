@@ -29,27 +29,27 @@
  * Global defines
  *******************************************************************************/
  
-                /**< Drive port definitions */
+                    /**< Drive port definitions */
 #define DL_PORT     gpioPortD   /**< em_lib name of port used for DL */
 #define DH_PORT     gpioPortD   /**< em_lib name of port used for DH */
 #define DL_PIN      6           /**< Bit/Pin # for DL in above port */
 #define DH_PIN      7           /**< Bit/Pin # for DH in above port */
 #define DL_OFF_LVL  0           /**< Logic level when DL is off */
 #define DH_OFF_LVL  1           /**< Logic level when DH is off */
-                                /**< em_lib functions for setup DH CC Stop */
+                    /**< em_lib functions for setup DH CC Stop */
 #define DH_CC_STOP  ( TIMER_CC_CTRL_ICEDGE_BOTH         | \
                       TIMER_CC_CTRL_CUFOA_SET           | \
                       TIMER_CC_CTRL_COFOA_SET           | \
                       TIMER_CC_CTRL_CMOA_SET            | \
                       TIMER_CC_CTRL_COIST               | \
                       TIMER_CC_CTRL_MODE_OUTPUTCOMPARE)
-                                /**< em_lib functions for setup DL CC Stop */
+                    /**< em_lib functions for setup DL CC Stop */
 #define DL_CC_STOP  ( TIMER_CC_CTRL_ICEDGE_BOTH         | \
                       TIMER_CC_CTRL_CUFOA_CLEAR         | \
                       TIMER_CC_CTRL_COFOA_CLEAR         | \
                       TIMER_CC_CTRL_CMOA_CLEAR          | \
                       TIMER_CC_CTRL_MODE_OUTPUTCOMPARE)
-                                /**< em_lib functions for setup CC Run (both) */
+                    /**< em_lib functions for setup CC Run (both) */
 #define DR_CC_RUN   ( TIMER_CC_CTRL_ICEDGE_BOTH         | \
                       TIMER_CC_CTRL_CUFOA_NONE          | \
                       TIMER_CC_CTRL_COFOA_NONE          | \
@@ -60,34 +60,34 @@
 #define CC2_STOP    TIMER_CC_CTRL_MODE_OFF
 
                     /**< SPI port definitions */
-//#define SPI_MOSI    0       // Tx pin = MOSI -> not connected to SPI device!
-#define SPI_MISO    1         // Rx pin = MISO
-#define SPI_SCLK    2         // CLK pin = SCLK
-#define CS_T_SENSOR 3         // CS pin for Temp Sensor
+//#define SPI_MOSI    0         // Tx pin = MOSI -> not connected to SPI device!
+#define SPI_MISO    1           // Rx pin = MISO
+#define SPI_SCLK    2           // CLK pin = SCLK
+#define CS_T_SENSOR 3           // CS pin for Temp Sensor
 //Note PortD Pin 3 is used for AutoCS functionality
-#define SPI_PORT    gpioPortD // SPI Port definition
+#define SPI_PORT    gpioPortD   // SPI Port definition
 
                     /**< Button port definitions */
-#define PB0_PORT    gpioPortD           //Port D
-#define PB0_PIN     8                   //Button 0 on Board tg
-#define PB1_PORT    gpioPortB           //Port B
-#define PB1_PIN     11                  //Button 1 on Board tg
+#define PB0_PORT    gpioPortD   //Port D
+#define PB0_PIN     8           //Button 0 on Board tg
+#define PB1_PORT    gpioPortB   //Port B
+#define PB1_PIN     11          //Button 1 on Board tg
 
 
                     /**< Timing definitions */
-#define F_HFXO          32000000                      // Crystal oszillator frequency
-#define F_TX            40000                         // 40kHz --> TX frequency
+#define F_HFXO      32000000    // Crystal oszillator frequency
+#define F_TX        40000       // 40kHz --> TX frequency
 
 
                     /**< Counter definitions */
-#define BURST_PULSE_CNT   40                          // Pulsewith of burst was 80
-#define PERIOD_PULSE_CNT  80000                       // total count in one burst cycle
-#define TIMER1_LOAD_VAL   201                         // the value to loat in Counter
-                                                      //  of Timer1 for next bust
+#define BURST_PULSE_CNT   40    // Pulsewith of burst was 80
+#define PERIOD_PULSE_CNT  80000 // total count in one burst cycle
+#define TIMER1_LOAD_VAL   201   // the value to loat in Counter
+                                //  of Timer1 for next bust
 
-                                /**< DMA definitions */
-#define DMA_BUFFER_SIZE               256             // x entries in one DMA buffer
-#define DMA_BUFFER_COUNT              4               // x DMA buffers
+                    /**< DMA definitions */
+#define DMA_BUF_SIZE      256   // x entries in one DMA buffer
+#define DMA_BUFS          4     // x DMA buffers
 
 /*******************************************************************************
  * Enums
@@ -149,19 +149,19 @@ typedef struct        // Represents temperature data read from sensor
 /*****************************************************************************
  * global variable references
  *****************************************************************************/
-extern state_testing    SM_Testing;
-extern state_main       MM_Entry;
-extern bool         wakeUp;
-extern uint32_t     counter;
-extern bool             PB0waspressed;
-extern bool         PB1waspressed;
-extern bool             GUI_StateChange;
-extern bool             RoutineStateChng;
-extern bool         routineactive;
-extern TempData_t       TempData;
-extern uint16_t     DMA_buffer[DMA_BUFFER_COUNT][DMA_BUFFER_SIZE];
-extern uint16_t     DMA_buffer_last; 
-extern uint16_t     DMA_buffer_current; 
+extern state_testing  SM_Testing;
+extern state_main     MM_Entry;
+extern bool           wakeUp;
+extern uint32_t       counter;
+extern bool           PB0waspressed;
+extern bool           PB1waspressed;
+extern bool           GUI_StateChange;
+extern bool           RoutineStateChng;
+extern bool           routineactive;
+extern TempData_t     TempData;
+extern uint16_t       DMA_buf[DMA_BUFS][DMA_BUF_SIZE];
+extern uint16_t       DMA_buf_last; 
+extern uint16_t       DMA_buf_current; 
 
 
 #endif

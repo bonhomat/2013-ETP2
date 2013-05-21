@@ -33,8 +33,8 @@ void InitGPIOClk(void)
 void InitClk(void)
 {
   /* Activate high frequency crystal oscillator HFXO */
-  #define ON      true                      	// Enable oscillator
-  #define DO_WAIT true                      	// return when osc is ready to use
+  #define ON      true                  // Enable oscillator
+  #define DO_WAIT true                  // return when osc is ready to use
   CMU_OscillatorEnable( cmuOsc_HFXO, ON, DO_WAIT );
   CMU_ClockSelectSet( cmuClock_HF, cmuSelect_HFXO );
 
