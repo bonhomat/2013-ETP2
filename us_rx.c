@@ -146,19 +146,19 @@ void transferComplete(unsigned int channel, bool primary, void *user)
     }
     else
     {
-      TIMER_Enable(TIMER0, false);            /* Stopping ADC by stopping TIMER0 */
-      transferActive = false;                 /* Clearing Flag */
+      TIMER_Enable(TIMER0, false);      /* Stopping ADC by stopping TIMER0 */
+      transferActive = false;           /* Clearing Flag */
     }
 
-    if(transfernumber>1)                      /* Do not check Buffer 1 (overspeaking)*/
+    if(transfernumber > 1)              /* Do not check Buffer 1 (overspeaking)*/
     {
-      if(transfernumber==2)
+      if(transfernumber == 2)
       {
-        compareData(StartCmp);                  /* Check Buffer values for bursts afer StartCmp in 2nd Buffer */
+        compareData(StartCmp);          /* Check Buffer values for bursts afer StartCmp in 2nd Buffer */
       }
       else
       {
-        compareData(0);                       /* Check Buffer values for bursts */
+        compareData(0);                 /* Check Buffer values for bursts */
       }
     }
   }
