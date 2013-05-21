@@ -48,6 +48,7 @@ void TIMER1_IRQHandler(void)
     counter++;
     switch(SM_Testing)
     {
+      case measure:
       case sburst:
         if (counter >= BURST_PULSE_CNT)
         {

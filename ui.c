@@ -13,6 +13,7 @@
 #include "globals.h"
 #include "us_tx.h"
 #include "us_uart.h"
+#include "us_rx.h"
 #include "temperature.h"
 
 
@@ -131,7 +132,7 @@ void SM_Testing_PB1pressed(void)
 
     case sburst:                                  //Interrupt in Burst State
       routineactive = true;
-      //counter = 0;
+      counter = 0;
       TIMER1->CNT = TIMER1_LOAD_VAL;
       TIMER1->CC[2].CTRL = CC2_RUN;
       TIMER1->CC[0].CTRL = DR_CC_RUN;
@@ -141,7 +142,7 @@ void SM_Testing_PB1pressed(void)
     case rburst:                                  //Interrupt in Repetitive Burst
       if (routineactive == true)
       {             
-        //counter = 0;
+        counter = 0;
         TIMER1->CNT = TIMER1_LOAD_VAL;
         TIMER1->CC[2].CTRL = CC2_RUN;
         TIMER1->CC[0].CTRL = DR_CC_RUN;
@@ -166,6 +167,22 @@ void SM_Testing_PB1pressed(void)
       SegmentLCD_EnergyMode(2,0);
       break;
       
+	case measure:                                  //measure
+      {
+	  SegmentLCD_Symbol(LCD_SYMBOL_GECKO, 1);   // show Program State ON
+	  counter = 0;
+      TIMER1->CNT = TIMER1_LOAD_VAL;
+      TIMER1->CC[2].CTRL = CC2_RUN;
+      TIMER1->CC[0].CTRL = DR_CC_RUN;
+      TIMER1->CC[1].CTRL = DR_CC_RUN;
+      InitADC();
+	    Measure();
+      TIMER1->CC[0].CTRL = DL_CC_STOP;            // stop CH1
+      TIMER1->CC[1].CTRL = DH_CC_STOP;            // stop CH2
+      TIMER1->CC[2].CTRL = CC2_STOP;
+	  }
+      break; 
+	  
     default:
       SegmentLCD_Write("ERROR");                //Interrupt in all other cases
       break;
@@ -321,6 +338,13 @@ void STATE_INITIALISER(void)
           routineactive = false;                  // Set routine as not active
           break;
           
+    case measure: 
+      SegmentLCD_Write("Mess");
+	  //InitADC();
+
+      routineactive = false;                  // Set routine as not active
+      break;	  
+      
         default:
           SegmentLCD_Write("missing");
           routineactive = false;                  // Set routine as not active
@@ -402,17 +426,19 @@ void STATE_INITIALISER(void)
           break;
         
         case rburst:
-          SM_Testing = uart;
+          SM_Testing = measure;
           break;
         
         case uart:
-          SM_Testing = exit_test;
+          SM_Testing = measure;
           break;
         
         case exit_test:
           SM_Testing = continious;
           break;
       
+	case measure:
+	  GUIState = uart;
         default:
           SM_Testing = top;
       } //End: switch

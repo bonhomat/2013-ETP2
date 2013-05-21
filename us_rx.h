@@ -28,7 +28,8 @@
 extern void InitADC(void);
 
 /**************************************************************************//**
- * @brief Initializes all needed DMA channel
+ * @brief Start Measuring routine give back Maxcount as top reaced Value
+ * @par MAXcount
  * 
  *****************************************************************************/
 extern void Measure(void);

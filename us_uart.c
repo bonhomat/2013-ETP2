@@ -13,9 +13,9 @@
 #include "dmactrl.h"
 #include "em_leuart.h"
 #include "em_dma.h"
-//#include "em_rtc.h"
 
 #include "globals.h"
+#include "us_rx.h"
 
 
 
@@ -27,10 +27,8 @@
  /* DEFINES */
 
 #define DMA_CHANNEL           0
-#define BUF_MAX               8
+#define BUF_MAX               2*DMA_BUFFER_SIZE // was 8 for hello 
 
-
-char hello[] = { 'H', 'E', 'L', 'L', 'O',' ', 0,' '};                                         //to be included by ADC
 
 /* DMA callback structure */
 DMA_CB_TypeDef cb[DMA_CHAN_COUNT];
@@ -38,16 +36,17 @@ DMA_CB_TypeDef cb[DMA_CHAN_COUNT];
 /* Defining the LEUART0 initialization data */
 LEUART_Init_TypeDef leuart0Init =
 {
-  .enable   = leuartEnableTx,       /* Activate data reception on LEUn_TX pin. */
-  .refFreq  = 0,                    /* Inherit the clock frequenzy from the LEUART clock source */
-  .baudrate = 115200,               /* Baudrate = 115200 bps =>8,68us */
-  .databits = leuartDatabits8,      /* Each LEUART frame containes 8 databits */
-  .parity   = leuartNoParity,       /* No parity bits in use */
-  .stopbits = leuartStopbits2,      /* Setting the number of stop bits in a frame to 2 bitperiods */
+  .enable   = leuartEnableTx,           /* Activate data reception on LEUn_TX pin. */
+  .refFreq  = 0,                        /* Inherit the clock frequenzy from the LEUART clock source */
+  .baudrate = 115200,                   /* Baudrate = 115200 bps =>8,68us */
+  .databits = leuartDatabits8,          /* Each LEUART frame containes 8 databits */
+  .parity   = leuartNoParity,           /* No parity bits in use */
+  .stopbits = leuartStopbits1,          /* Setting the number of stop bits in a frame to 2 bitperiods */
 };
 
 /* DMA init structure */
-DMA_Init_TypeDef dmaInit = {
+DMA_Init_TypeDef dmaInit = 
+{
   .hprot        = 0,                    /* No descriptor protection */
   .controlBlock = dmaControlBlock,      /* DMA control block alligned to 256 */
 };
@@ -64,11 +63,11 @@ DMA_CfgChannel_TypeDef chnlCfg =
 /* Setting up channel descriptor */
 DMA_CfgDescr_TypeDef descrCfg =
 {
-  .dstInc  = dmaDataIncNone,    /* Do not increment destination address */
-  .srcInc  = dmaDataInc1,       /* Increment source address by one byte */
-  .size    = dmaDataSize1,      /* Data size is one byte */
-  .arbRate = dmaArbitrate1,     /* Rearbitrate for each byte recieved */
-  .hprot   = 0,                 /* No read/write source protection */
+  .dstInc  = dmaDataIncNone,            /* Do not increment destination address */
+  .srcInc  = dmaDataInc1,               /* Increment source address by one byte */
+  .size    = dmaDataSize1,              /* Data size is one byte */
+  .arbRate = dmaArbitrate1,             /* Rearbitrate for each byte recieved */
+  .hprot   = 0,                         /* No read/write source protection */
 };
 
 /**************************************************************************//**
@@ -79,20 +78,31 @@ DMA_CfgDescr_TypeDef descrCfg =
  *****************************************************************************/ 
 void leuartsend(void)
 {
-
-  /* Set new DMA source address directly in the DMA descriptor */
-  dmaControlBlock->SRCEND = hello + BUF_MAX - 1;                                //write data into Memory
-  
+  int i=0;
+  if(i==0)
+  {
+    /* Set new DMA source address directly in the DMA descriptor */
+    dmaControlBlock->SRCEND = (char*)DMA_buffer[DMA_buffer_last] + BUF_MAX - 1; /*Set Pointer to measured data in memory */
+    i=1;
+  }
+  else
+  {
+    /* Set new DMA source address directly in the DMA descriptor */
+    dmaControlBlock->SRCEND = (char*)DMA_buffer[DMA_buffer_current] + BUF_MAX - 1; /*Set Pointer to measured data in memory */
+    i=0;
+  }
   /* Enable DMA wake-up from LEUART0 TX */
   LEUART0->CTRL = LEUART_CTRL_TXDMAWU;
 
   /* (Re)starting the transfer. Using Basic Mode */
-  DMA_ActivateBasic(DMA_CHANNEL,                  /* Activate channel selected */
-                    true,                         /* Use primary descriptor */
-                    false,                        /* No DMA burst */
-                    NULL,                         /* Keep destination address */
-                    NULL,                         /* Keep source address*/
-                    BUF_MAX - 1);                 /* Size of buffer minus1 */
+  DMA_ActivateBasic(DMA_CHANNEL,           /* Activate channel selected */
+                    true,                  /* Use primary descriptor */
+                    false,                 /* No DMA burst */
+                    NULL,                  /* Keep destination address */
+                    NULL,                  /* Keep source address*/
+                    BUF_MAX - 1);          /* Size of buffer minus1 */
+
+ 
 
 }
 
@@ -193,7 +203,7 @@ void InitUart(void)
 	CMU_ClockEnable(cmuClock_DMA, true);        /* Enable DMA clock */
 	CMU_ClockEnable(cmuClock_GPIO, true);       /* Enable GPIO clock */	//done by Main?
 	CMU_ClockEnable(cmuClock_LEUART0, true);    /* Enable LEUART0 */
-	initLeuart();								/* setup Uart IO*/ 
+	initLeuart();								                /* setup Uart IO*/ 
 	setupLeuartDma();                           /* setup Uart DMA*/
 
 }

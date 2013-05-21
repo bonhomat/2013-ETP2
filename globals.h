@@ -5,7 +5,7 @@
  *
  * @author bonhomat@students.zhaw.ch
  *         burrisim@students.zhaw.ch
- * @date   2013-04-16
+ * @date   2013-05-20
  * @version 0.1
  *
  * @verbatim
@@ -80,12 +80,14 @@
 
 
                     /**< Counter definitions */
-#define BURST_PULSE_CNT   80                          // Pulsewith of burst
+#define BURST_PULSE_CNT   40                          // Pulsewith of burst was 80
 #define PERIOD_PULSE_CNT  80000                       // total count in one burst cycle
 #define TIMER1_LOAD_VAL   201                         // the value to loat in Counter
                                                       //  of Timer1 for next bust
 
-
+                                /**< DMA definitions */
+#define DMA_BUFFER_SIZE               256             // x entries in one DMA buffer
+#define DMA_BUFFER_COUNT              4               // x DMA buffers
 
 /*******************************************************************************
  * Enums
@@ -117,6 +119,7 @@ typedef enum states_sub
   continious,                   /**< State on/continious wave             */
   sburst,                       /**< State single burst                   */
   rburst,                       /**< State continious burst               */
+  measure,                      /**< single measurement                   */  
   uart,                         /**< State uart transmit                  */
   exit_test,                    /**< State exit from tests                */
 } state_testing;
@@ -148,14 +151,18 @@ typedef struct        // Represents temperature data read from sensor
  *****************************************************************************/
 extern state_testing    SM_Testing;
 extern state_main       MM_Entry;
-extern bool             wakeUp;
-extern uint32_t         counter;
+extern bool         wakeUp;
+extern uint32_t     counter;
 extern bool             PB0waspressed;
-extern bool             PB1waspressed;
+extern bool         PB1waspressed;
 extern bool             GUI_StateChange;
 extern bool             RoutineStateChng;
-extern bool             routineactive;
+extern bool         routineactive;
 extern TempData_t       TempData;
+extern uint16_t     DMA_buffer[DMA_BUFFER_COUNT][DMA_BUFFER_SIZE];
+extern uint16_t     DMA_buffer_last; 
+extern uint16_t     DMA_buffer_current; 
+
 
 #endif
 
