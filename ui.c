@@ -170,9 +170,8 @@ void SM_Testing_PB1pressed(void)
       break;
 
     case tst_measure:                               //test measure
-      routineactive = true;
+      SegmentLCD_Symbol(LCD_SYMBOL_GECKO, 1);
 
-      //DMA_Clr_Buf();
       for(int i = 0; i < DMA_BUFS; i++)
       {
         for(int j=0; j < DMA_BUF_SIZE; j++)
@@ -195,6 +194,7 @@ void SM_Testing_PB1pressed(void)
         SegmentLCD_Number(MaxCount/10);           /* Write value out on display */
         SegmentLCD_Symbol(LCD_SYMBOL_DP10,1);
       }
+      SegmentLCD_Symbol(LCD_SYMBOL_GECKO, 0);
       break;
 
     case uart:                                  //send data
@@ -230,7 +230,7 @@ void ButtonPB1pressed(void)
     case distance:
       // measure distance
       SegmentLCD_Symbol(LCD_SYMBOL_GECKO, 1);
-      SegmentLCD_Number( getAvgDistance(6) );
+      SegmentLCD_Number( getAvgDistance(noMeasurements)/10 );
       SegmentLCD_Symbol(LCD_SYMBOL_GECKO, 0);
       SegmentLCD_Symbol(LCD_SYMBOL_DP10,1);
       // RoutineStateChng = false;
@@ -255,10 +255,16 @@ void ButtonPB1pressed(void)
 
     case offset:
       // change the offset
+      offset_val = offset_val + 5;
+      if (offset_val > 100) offset_val = -100;
+      SegmentLCD_Number(offset_val);
       break;
 
     case n_of_meas:
       // change number of measurements
+      noMeasurements = noMeasurements + 1;
+      if (noMeasurements > 16) noMeasurements = 1;
+      SegmentLCD_Number(noMeasurements);
       break;
 
     case testing:
@@ -294,16 +300,18 @@ void STATE_INITIALISER(void)
       break;
 
     case distance:
+      TX_Timer_Run();
       SegmentLCD_NumberOff();
       SegmentLCD_Symbol(LCD_SYMBOL_DEGC,0);
       SegmentLCD_Symbol(LCD_SYMBOL_DP10,0);
       SegmentLCD_Write("DIST  m");
-      TX_Timer_Run();
       InitADC();
+      routineactive = false;
       break;
 
     case speed:
       SegmentLCD_Write("SPEED");
+      routineactive = false;
       break;
 
     case temp:
@@ -319,6 +327,7 @@ void STATE_INITIALISER(void)
       SegmentLCD_Number(TempData.degrees*100+TempData.fraction);
       SegmentLCD_Symbol(LCD_SYMBOL_DEGC,1);
       SegmentLCD_Symbol(LCD_SYMBOL_DP10,1);
+      routineactive = false;
       break;
 
     case setting:
@@ -327,21 +336,28 @@ void STATE_INITIALISER(void)
       SegmentLCD_Symbol(LCD_SYMBOL_DEGC,0);
       SegmentLCD_Symbol(LCD_SYMBOL_DP10,0);
       SegmentLCD_Write("Set   +");
+      routineactive = false;
       break;
 
     case offset:
       SegmentLCD_Write("OFFSET");
+      SegmentLCD_Number(offset_val);
+      routineactive = false;
       break;
 
     case n_of_meas:
       SegmentLCD_Write("NofMeas");
+      SegmentLCD_Number(noMeasurements);
+      routineactive = false;
       break;
 
     case testing:
       switch (SM_Testing)
       {
         case top:
+          SegmentLCD_NumberOff();
           SegmentLCD_Write("Tests +");
+          routineactive = false;
           break;
 
         case continious:
@@ -365,7 +381,7 @@ void STATE_INITIALISER(void)
           break;
 
         case tst_measure:
-          NVIC_DisableIRQ(RTC_IRQn);              // disable RTC Interrupts
+          //NVIC_DisableIRQ(RTC_IRQn);              // disable RTC Interrupts
           TX_Timer_Run();                         // activate timer 1
           SegmentLCD_Write("Mess");
           InitADC();
@@ -381,7 +397,7 @@ void STATE_INITIALISER(void)
           break;
 
         case exit_test:
-          NVIC_EnableIRQ(RTC_IRQn);               // enable RTC Interrupts
+          //NVIC_EnableIRQ(RTC_IRQn);               // enable RTC Interrupts
           TX_Timer_Stop();
           SegmentLCD_NumberOff();                 // clear value on display
           SegmentLCD_Symbol(LCD_SYMBOL_DP10,0);

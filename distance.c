@@ -49,9 +49,9 @@
  * Static variables
  *******************************************************************************/
 uint16_t  Dist_buf[ DIST_BUF_SIZE ]; // Distance Buffer
-
-uint8_t destPos = 0;    // destination position in distance array
-// TempData
+int8_t    offset_val = 0;     // offset of the distanc masurement +/-100mm in 5mm steps
+uint8_t   destPos = 0;    // destination position in distance array
+uint8_t   noMeasurements = 1;  // max val is DIST_BUF_SIZE;
 
 
 
@@ -88,7 +88,7 @@ uint16_t getAvgDistance( uint8_t noSamples )
   
   for( i = 0; i < DIST_BUF_SIZE; i++)   // clear the buffer
   {
-  Dist_buf[destPos] = 0;
+    Dist_buf[destPos] = 0;
   }
   
   if(noSamples > DIST_BUF_SIZE) noSamples = DIST_BUF_SIZE;
@@ -126,7 +126,9 @@ uint16_t getAvgDistance( uint8_t noSamples )
   // caluclations
   dist = c_air / 10;
   dist *= average_Dist_buf(destPos);
-  dist /= 320000;
+  dist /= 32000;
+  
+  dist += offset_val;
   
   ButtonsEnable();  // enable user buttons
   

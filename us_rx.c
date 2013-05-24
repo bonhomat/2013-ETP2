@@ -55,7 +55,7 @@
 #define ADC_Pin           4                 ///< DMA Pin
 #define RX_BarrierVal     3100              ///< ADC value barrier start
 #define RX_BarrierDec     14       //8       ///< ADC value barrier decrement per buffer
-#define StartCmp          260               ///< omit no of samples before first compare
+#define StartCmp          400               ///< omit no of samples before first compare
 
 /* ADC => DMA buffers and related */
 DMA_CB_TypeDef cbn;                         ///< callback structure

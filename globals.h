@@ -175,6 +175,7 @@ extern uint16_t       DMA_buf_last;
 extern uint16_t       DMA_buf_current;
 extern uint16_t       MaxCount;
 extern bool           out_of_range;
-
+extern int8_t         offset_val;
+extern uint8_t        noMeasurements;
 #endif
 
