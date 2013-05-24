@@ -41,17 +41,29 @@
 #include "temperature.h"
 
 
+
 /*******************************************************************************
  **************************   DATA DEFINITIONS   *******************************
  ******************************************************************************/
 
 
 /*****************************************************************************
- * data definitions
+ * Static variables
  *****************************************************************************/
 bool    wakeUp = false;         /**< Used in main loop and ISR  */
+uint32_t tcntr = 0; /* test counter for break while waiting for temp */
 
 
+
+
+/*******************************************************************************
+ **************************   LOCAL FUNCTIONS   ********************************
+ ******************************************************************************/
+
+
+/**************************************************************************//**
+ * @brief Setup for energy measurments of device
+ *****************************************************************************/
 void setupSWO(void)
 {
   /* Enable GPIO Clock. */
@@ -93,6 +105,7 @@ void setupSWO(void)
 }
 
 
+
 /*******************************************************************************
  **************************   MAIN   *******************************************
  ******************************************************************************/
@@ -108,32 +121,44 @@ int main(void)
   setupSWO();
 
   /*Initialize peripherals */
-  InitClocks() ;                  // Initialize clock system
-  InitButtons() ;                 // Initialize GPIO-Buttons
+  InitClocks();                   // Initialize clock system
+  InitTimer1();                   // Initialize Timer1 for TX
+  InitButtons();                  // Initialize GPIO-Buttons
   SegmentLCD_Init(false);         // Initialise LCD
+
 
   InitUsart1SPI();                // Initialise SPI to temp sensor
   InitTSensor( T_SENS_SHUTDOWN ); // Put temp sensor into shutdown mode
-  while (TempData.valid == 0)
+
+  #define TEMP_READ_MAX_TRIES 50000 // maximal number of retries to read temperature
+  for ( tcntr = 0; !TempData.valid && tcntr < TEMP_READ_MAX_TRIES ; tcntr++)
   {
     TempData = getTemperature();
   }
   InitTSensor( T_SENS_SHUTDOWN ); // Put temp sensor into shutdown mode
 
 
-  /*Write ready at boot up*/
-  SegmentLCD_Write("Ready");
-  SegmentLCD_EnergyMode(0,1);
-  SegmentLCD_Number(TempData.degrees*100+TempData.fraction);
-  SegmentLCD_Symbol(LCD_SYMBOL_DEGC,1);
-  SegmentLCD_Symbol(LCD_SYMBOL_DP10,1);
-  
+  if (!TempData.valid)
+  {
+    SegmentLCD_Write("ErrTSen");
+    SegmentLCD_Number(tcntr);
+  }
+  else
+  {
+    /*Write ready at boot up*/
+    SegmentLCD_Write("Ready");
+    SegmentLCD_EnergyMode(0,1);
+    SegmentLCD_Number(TempData.degrees*100+TempData.fraction);
+    SegmentLCD_Symbol(LCD_SYMBOL_DEGC,1);
+    SegmentLCD_Symbol(LCD_SYMBOL_DP10,1);
+  }
+
   /* Main loop */
   while(1)
   {
     if (!wakeUp)        // go into enegy mode 1 when nothing is to do
       EMU_EnterEM1();   // wake up with next interrupt
-    wakeUp = false ;
+    wakeUp = false;
 
     UI_Main();
 

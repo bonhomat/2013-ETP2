@@ -1,3 +1,20 @@
+/**************************************************************************//**
+ * @file ui.h
+ *
+ * @brief User Interface functions & defines
+ *
+ * @author bonhomat@students.zhaw.ch
+ *         burrisim@students.zhaw.ch
+ * @date   2013-05-18
+ * @version 0.1
+ *
+ * @verbatim
+ * User Interface used defines, configuration and functions
+ * @endverbatim 
+ *******************************************************************************
+ * @section License
+ * <b>OpenSource GPL3</b>
+ *******************************************************************************/
 
 
 

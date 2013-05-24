@@ -1,7 +1,7 @@
 /**************************************************************************//**
  * @file us_rx.h
  *
- * @brief rx functions & defines
+ * @brief RX functions & defines
  *
  * @author bonhomat@students.zhaw.ch
  *         burrisim@students.zhaw.ch
@@ -9,8 +9,8 @@
  * @version 0.1
  *
  * @verbatim
- * us receiver with ADC, defines, configuration and DMA functions
- * @endverbatim 
+ * Ultra sonic receiver with ADC, defines, configuration and DMA functions
+ * @endverbatim
  *******************************************************************************
  * @section License
  * <b>OpenSource GPL3</b>
@@ -22,15 +22,21 @@
 #define __us_rx_H
 
 /**************************************************************************//**
+ * @brief Resets the DMA to reset values for other use
+ *
+ *****************************************************************************/
+extern void DMA_Reset(void);
+
+/**************************************************************************//**
  * @brief Initializes all needed ADC channel
- * 
+ *
  *****************************************************************************/
 extern void InitADC(void);
 
 /**************************************************************************//**
  * @brief Start Measuring routine
- * 
+ *
  *****************************************************************************/
-extern void Measure(void);
+extern void RX_Measure(void);
 
 #endif

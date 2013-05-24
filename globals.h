@@ -80,16 +80,23 @@
 
 
                     /**< Counter definitions */
-#define BURST_PULSE_CNT   40    // Pulsewith of burst was 80
-#define PERIOD_PULSE_CNT  80000 // total count in one burst cycle
-#define TIMER1_LOAD_VAL   201   // the value to loat in Counter
-                                //  of Timer1 for next bust
+#define BURST_PULSE_CNT     80    // Pulsewith of burst was 80
+#define PERIOD_PULSE_CNT    80000 // total count in one burst cycle
+#define TIMER1_LOAD_VAL     201   // the value to load in Counter
+                                  //  of Timer1 for next burst
 
                     /**< DMA definitions */
 #define DMA_TRANSFER_COUNT  60 //40 ///< x DMA transfers timeout for overdistance >60ms,10m
 #define DMA_BUF_SIZE        256     // x entries in one DMA buffer
 #define DMA_BUFS            4       // x DMA buffers
 
+
+                  /**< sound speed in air definitions */
+#define C_0_SPEED   331300    // speed of sound in mm/s in air at 0°C
+#define C_INC_DEG   606       // speed of sound increment in mm/s for 1°C rise
+#define C_MIN_SPEED 300000    // at about -40°C in mm/s
+#define C_MAX_SPEED 400000    // at about 100°C in mm/s
+                  
 /*******************************************************************************
  * Enums
  *******************************************************************************/
@@ -120,7 +127,7 @@ typedef enum states_sub
   continious,                   /**< State on/continious wave             */
   sburst,                       /**< State single burst                   */
   rburst,                       /**< State continious burst               */
-  measure,                      /**< single measurement                   */  
+  tst_measure,                      /**< single measurement                   */  
   uart,                         /**< State uart transmit                  */
   exit_test,                    /**< State exit from tests                */
 } state_testing;
@@ -138,10 +145,10 @@ typedef enum states_sub
 ********************************************************************************/
 typedef struct        // Represents temperature data read from sensor
 {                     // in different formats
-  int16_t raw ;       // temp value in 1/16 degrees celsius
-  int16_t degrees ;   // Integer value in degrees celsius
-  uint8_t fraction ;  // Two digit fractional value
-  bool valid ;        // True if conversion terminated successfully 
+  int16_t raw;        // temp value in 1/16 degrees celsius
+  int16_t degrees;    // Integer value in degrees celsius
+  uint8_t fraction;   // Two digit fractional value
+  bool valid;         // True if conversion terminated successfully 
 } TempData_t;
  
 
@@ -153,18 +160,21 @@ typedef struct        // Represents temperature data read from sensor
 extern state_testing  SM_Testing;
 extern state_main     MM_Entry;
 extern bool           wakeUp;
-extern uint32_t       counter;
+extern uint32_t       TX_counter;
+extern uint16_t       RTC_cntr;
+extern bool           RTC_tick;
 extern bool           PB0waspressed;
 extern bool           PB1waspressed;
 extern bool           GUI_StateChange;
 extern bool           RoutineStateChng;
 extern bool           routineactive;
 extern TempData_t     TempData;
+extern uint32_t       c_air;
 extern uint16_t       DMA_buf[DMA_BUFS][DMA_BUF_SIZE];
-extern uint16_t       DMA_buf_last; 
-extern uint16_t       DMA_buf_current; 
+extern uint16_t       DMA_buf_last;
+extern uint16_t       DMA_buf_current;
 extern uint16_t       MaxCount;
-
+extern bool           out_of_range;
 
 #endif
 

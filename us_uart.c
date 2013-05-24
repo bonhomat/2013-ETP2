@@ -1,3 +1,23 @@
+/**************************************************************************//**
+ * @file us_uart.c
+ *
+ * @brief Serial interface 
+ *
+ * @author bonhomat@students.zhaw.ch
+ *         burrisim@students.zhaw.ch
+ * @date   2013-04-30
+ * @version 0.1
+ *
+ * @verbatim
+ * Sending receiving data over serial interface
+ * @endverbatim 
+ *******************************************************************************
+ * @section License
+ * <b>OpenSource GPL3</b>
+ *******************************************************************************/
+
+ 
+
 /***************************************************************************//**
  * Includes
  *******************************************************************************/
@@ -18,6 +38,10 @@
 #include "us_rx.h"
 
 
+
+/*******************************************************************************
+ **************************   DATA DEFINITIONS   *******************************
+ ******************************************************************************/
 
 
 
@@ -72,13 +96,20 @@ DMA_CfgDescr_TypeDef descrCfg =
   .hprot   = 0,                         /* No read/write source protection */
 };
 
+
+
+/*******************************************************************************
+ **************************   LOCAL FUNCTIONS   ********************************
+ ******************************************************************************/
+
+
 /**************************************************************************//**
  * @brief LeuartSend
  *
  * This routine will run on every call up and send the DMA data over Uart
  *
  *****************************************************************************/ 
-void leuartsend(void)
+void leuartSend(void)
 {
   uart_buf_sent = 0;
   
@@ -116,6 +147,7 @@ void leuartsend(void)
  ******************************************************************************/
 void dmaTransferDone(unsigned int channel, bool primary, void *user)
 {
+  (void) user;
   if (uart_buf_sent < 2)
   {
     uart_buf_sent++;
@@ -124,8 +156,8 @@ void dmaTransferDone(unsigned int channel, bool primary, void *user)
     dmaControlBlock->SRCEND = (char*)DMA_buf[buf_to_send] + BUF_MAX - 1; /*Set Pointer to measured data in memory */
   
     /* (Re)starting the transfer. Using Basic Mode */
-    DMA_ActivateBasic(DMA_CHANNEL,           /* Activate channel selected */
-                      true,                  /* Use primary descriptor */
+    DMA_ActivateBasic(channel,           /* Activate channel selected */
+                      primary,                  /* Use primary descriptor */
                       false,                 /* No DMA burst */
                       NULL,                  /* Keep destination address */
                       NULL,                  /* Keep source address*/
@@ -135,7 +167,6 @@ void dmaTransferDone(unsigned int channel, bool primary, void *user)
   {
     (void) channel;
     (void) primary;
-    (void) user;
     
     /* Disable DMA wake-up from LEUART0 TX */
     LEUART0->CTRL &= ~LEUART_CTRL_TXDMAWU;
@@ -154,8 +185,8 @@ void dmaTransferDone(unsigned int channel, bool primary, void *user)
 void initLeuart(void)
 {
   /* Reseting and initializing LEUART0 */
-  LEUART_Reset(LEUART0);
-  LEUART_Init(LEUART0, &leuart0Init);
+  LEUART_Reset( LEUART0 );
+  LEUART_Init ( LEUART0, &leuart0Init );
 
   /* Route LEUART0 TX pin to DMA location 0 */
   LEUART0->ROUTE = LEUART_ROUTE_TXPEN |
@@ -185,9 +216,9 @@ void setupLeuartDma(void)
   cb[DMA_CHANNEL].userPtr = NULL;
   
   /* Initializing DMA, channel and desriptor */
-  DMA_Init(&dmaInit);  
-  DMA_CfgChannel(DMA_CHANNEL, &chnlCfg);
-  DMA_CfgDescr(DMA_CHANNEL, true, &descrCfg);
+  DMA_Init( &dmaInit );  
+  DMA_CfgChannel( DMA_CHANNEL, &chnlCfg );
+  DMA_CfgDescr  ( DMA_CHANNEL, true, &descrCfg );
 
   /* Set new DMA destination address directly in the DMA descriptor */
   dmaControlBlock->DSTEND = &LEUART0->TXDATA;
@@ -196,7 +227,7 @@ void setupLeuartDma(void)
   DMA->IEN = DMA_IEN_CH0DONE;
 
   /* Enable DMA interrupt vector */
-  NVIC_EnableIRQ(DMA_IRQn);
+  NVIC_EnableIRQ( DMA_IRQn );
 }
 
 
@@ -206,29 +237,38 @@ void setupLeuartDma(void)
  * Setup clock routing and enable clocks, Route and activate Pins setup DMA device
  *
  *****************************************************************************/
-
 void InitUart(void)
 {
   /* Start LFXO, and use LFXO for low-energy modules */
-  CMU_ClockSelectSet(cmuClock_LFB, cmuSelect_CORELEDIV2);
-  CMU_ClockDivSet(cmuClock_LEUART0, cmuClkDiv_2 );
-  CMU_ClockSelectSet(cmuClock_HF, cmuSelect_HFXO);
+  CMU_ClockSelectSet( cmuClock_LFB,     cmuSelect_CORELEDIV2 );
+  CMU_ClockDivSet   ( cmuClock_LEUART0, cmuClkDiv_2 );
+  CMU_ClockSelectSet( cmuClock_HF,      cmuSelect_HFXO );
 
   /* Enabling clocks, all other remain disabled */
-  CMU_ClockEnable(cmuClock_CORELE, true);     /* Enable CORELE clock */
-  CMU_ClockEnable(cmuClock_CORE, true);       /* Enable CORE clock*/
-  CMU_ClockEnable(cmuClock_HFPER, true);      /* Enable HF Peripheral*/
-  CMU_ClockEnable(cmuClock_DMA, true);        /* Enable DMA clock */
-  CMU_ClockEnable(cmuClock_GPIO, true);       /* Enable GPIO clock */   //done by Main?
-  CMU_ClockEnable(cmuClock_LEUART0, true);    /* Enable LEUART0 */
+  CMU_ClockEnable( cmuClock_CORELE,  true );  /* Enable CORELE clock */
+  CMU_ClockEnable( cmuClock_CORE,    true );  /* Enable CORE clock*/
+  CMU_ClockEnable( cmuClock_HFPER,   true );  /* Enable HF Peripheral*/
+  CMU_ClockEnable( cmuClock_DMA,     true );  /* Enable DMA clock */
+  CMU_ClockEnable( cmuClock_GPIO,    true );  /* Enable GPIO clock */   //done by Main?
+  CMU_ClockEnable( cmuClock_LEUART0, true );  /* Enable LEUART0 */
+  
   initLeuart();                               /* setup Uart IO*/ 
   setupLeuartDma();                           /* setup Uart DMA*/
 
 }
+
+
+
+/**************************************************************************//**
+ * @brief  SendUart
+ *
+ * Setup clock routing and enable clocks, Route and activate Pins setup DMA device
+ *
+ *****************************************************************************/
+
 void SendUart(void)
 {
 
-
-  leuartsend();
+  leuartSend();
 
 }

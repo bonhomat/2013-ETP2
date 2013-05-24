@@ -1,3 +1,24 @@
+/**************************************************************************//**
+ * @file ui.c
+ *
+ * @brief User Interface functions & defines
+ *
+ * @author bonhomat@students.zhaw.ch
+ *         burrisim@students.zhaw.ch
+ * @date   2013-05-18
+ * @version 0.1
+ *
+ * @verbatim
+ * User Interface used defines, configuration and functions
+ * @endverbatim
+ *******************************************************************************
+ * @section License
+ * <b>OpenSource GPL3</b>
+ *******************************************************************************/
+
+
+
+
 /***************************************************************************//**
  * Includes
  *******************************************************************************/
@@ -15,6 +36,7 @@
 #include "us_uart.h"
 #include "us_rx.h"
 #include "temperature.h"
+#include "distance.h"
 
 
 /*******************************************************************************
@@ -23,7 +45,7 @@
 
 
 /*****************************************************************************
- * data definitions
+ * Static variables
  *****************************************************************************/
 state_main    MM_Entry    = init;     /**< GUI-State for main menue     */
 state_testing SM_Testing  = top;      /**< GUI-State sub menue testing  */
@@ -35,6 +57,10 @@ bool  PB0waspressed     = false;      /**< */
 bool  PB1waspressed     = false;      /**< */
 
 
+
+/*******************************************************************************
+ **************************   LOCAL FUNCTIONS   ********************************
+ ******************************************************************************/
 
 
 /**************************************************************************//**
@@ -118,47 +144,34 @@ void SM_Testing_PB1pressed(void)
     case continious:                            // Interrupt in continious State
       if (routineactive == true)
       {
-        TIMER1->CNT = TIMER1_LOAD_VAL;
-        TIMER1->CC[0].CTRL = DR_CC_RUN;         // RUN Output on TX Module CH1
-        TIMER1->CC[1].CTRL = DR_CC_RUN;         // RUN Output on TX Module CH2
+        TX_Start_Signal();
       }
       else
       {
-        TIMER1->CC[0].CTRL = DL_CC_STOP;        // Stop Output on TX Module CH1
-        TIMER1->CC[1].CTRL = DH_CC_STOP;        // Stop Output on TX Module CH2
+        TX_Stop_Signal();
       }
       SegmentLCD_EnergyMode(2,1);
       break;
 
     case sburst:                                //Interrupt in Burst State
       routineactive = true;
-      counter = 0;
-      TIMER1->CNT = TIMER1_LOAD_VAL;
-      TIMER1->CC[2].CTRL = CC2_RUN;
-      TIMER1->CC[0].CTRL = DR_CC_RUN;
-      TIMER1->CC[1].CTRL = DR_CC_RUN;
+      TX_Start_Burst();
       break;
 
     case rburst:                                //Interrupt in Repetitive Burst
       if (routineactive == true)
       {
-        counter = 0;
-        TIMER1->CNT = TIMER1_LOAD_VAL;
-        TIMER1->CC[2].CTRL = CC2_RUN;
-        TIMER1->CC[0].CTRL = DR_CC_RUN;
-        TIMER1->CC[1].CTRL = DR_CC_RUN;
+        TX_Start_Burst();
       }
       else
       {
-        TIMER1->CC[0].CTRL = DL_CC_STOP;        // Stop Output on TX Module CH1
-        TIMER1->CC[1].CTRL = DH_CC_STOP;        // Stop Output on TX Module CH2
-        TIMER1->CC[2].CTRL = CC2_STOP;
+        TX_Stop_Burst();
       }
       break;
 
-    case measure:                               //measure
-      {
-      SegmentLCD_Symbol(LCD_SYMBOL_GECKO, 1);   // show Program State ON
+    case tst_measure:                               //test measure
+      routineactive = true;
+
       //DMA_Clr_Buf();
       for(int i = 0; i < DMA_BUFS; i++)
       {
@@ -168,16 +181,19 @@ void SM_Testing_PB1pressed(void)
         }
       }
 
-      counter = 0;
-      TIMER1->CNT = TIMER1_LOAD_VAL;
-      TIMER1->CC[2].CTRL = CC2_RUN;
-      TIMER1->CC[0].CTRL = DR_CC_RUN;
-      TIMER1->CC[1].CTRL = DR_CC_RUN;
-      InitADC();
-      Measure();
-      TIMER1->CC[0].CTRL = DL_CC_STOP;          // stop CH1
-      TIMER1->CC[1].CTRL = DH_CC_STOP;          // stop CH2
-      TIMER1->CC[2].CTRL = CC2_STOP;
+      TX_Start_Burst();
+      // InitADC();
+      RX_Measure();
+      if ( out_of_range )
+      {
+        SegmentLCD_Number(8888); 
+        SegmentLCD_Symbol(LCD_SYMBOL_DP10,0);
+      }
+      else
+      {
+        // output of uncalibrated distance
+        SegmentLCD_Number(MaxCount/10);           /* Write value out on display */
+        SegmentLCD_Symbol(LCD_SYMBOL_DP10,1);
       }
       break;
 
@@ -213,6 +229,12 @@ void ButtonPB1pressed(void)
   {
     case distance:
       // measure distance
+      SegmentLCD_Symbol(LCD_SYMBOL_GECKO, 1);
+      SegmentLCD_Number( getAvgDistance(6) );
+      SegmentLCD_Symbol(LCD_SYMBOL_GECKO, 0);
+      SegmentLCD_Symbol(LCD_SYMBOL_DP10,1);
+      // RoutineStateChng = false;
+      // routineactive = true;  
       break;
 
     case speed:
@@ -233,7 +255,6 @@ void ButtonPB1pressed(void)
 
     case offset:
       // change the offset
-      TempData = getTemperature();
       break;
 
     case n_of_meas:
@@ -249,6 +270,9 @@ void ButtonPB1pressed(void)
       GUI_StateChange = true;
       SegmentLCD_EnergyMode(1,0);
       break;
+      
+    default:
+      ;
   }
 
 }// END: ButtonPB1pressed
@@ -270,7 +294,12 @@ void STATE_INITIALISER(void)
       break;
 
     case distance:
+      SegmentLCD_NumberOff();
+      SegmentLCD_Symbol(LCD_SYMBOL_DEGC,0);
+      SegmentLCD_Symbol(LCD_SYMBOL_DP10,0);
       SegmentLCD_Write("DIST  m");
+      TX_Timer_Run();
+      InitADC();
       break;
 
     case speed:
@@ -278,12 +307,15 @@ void STATE_INITIALISER(void)
       break;
 
     case temp:
-      InitTSensor( T_SENS_ACTIVE );      // Put temp sensor into shutdown mode
+      InitTSensor( T_SENS_ACTIVE );      // Put temp sensor into active mode
       SegmentLCD_Write("AIRTemp");
-      while (TempData.valid == 0)
+      RTC_cntr = 0;
+      while ( RTC_cntr <= 10 && !PB0waspressed )   // wait 500ms
       {
-        TempData = getTemperature();
+        EMU_EnterEM1();
       }
+      if (PB0waspressed)  break;
+      TempData = getTemperature();
       SegmentLCD_Number(TempData.degrees*100+TempData.fraction);
       SegmentLCD_Symbol(LCD_SYMBOL_DEGC,1);
       SegmentLCD_Symbol(LCD_SYMBOL_DP10,1);
@@ -313,42 +345,46 @@ void STATE_INITIALISER(void)
           break;
 
         case continious:
-          InitTimer1() ;                          // Initialize timer 1
+          TX_Timer_Run();                         // activate timer 1
+          TX_Stop_Burst();
           SegmentLCD_Write("CW >>>");
-          TIMER1->CC[0].CTRL = DL_CC_STOP;        // Stop Output on TX Module CH1
-          TIMER1->CC[1].CTRL = DH_CC_STOP;        // Stop Output on TX Module CH2
-          TIMER1->CC[2].CTRL = CC2_STOP;
           routineactive = false;                  // Set routine as not active
           break;
 
         case sburst:
-          InitTimer1() ;                          // Initialize timer 1
+          TX_Timer_Run();                         // activate timer 1
+          TX_Stop_Burst();
           SegmentLCD_Write("Burst");
-          TIMER1->CC[0].CTRL = DL_CC_STOP;
-          TIMER1->CC[1].CTRL = DH_CC_STOP;
-          TIMER1->CC[2].CTRL = CC2_STOP;
           routineactive = false;                  // Set routine as not active
           break;
 
         case rburst:
-          InitTimer1() ;                          // Initialize timer 1
+          TX_Timer_Run();                         // activate timer 1
           SegmentLCD_Write("R-Burst");
           routineactive = false;                  // Set routine as not active
           break;
 
-        case measure:
+        case tst_measure:
+          NVIC_DisableIRQ(RTC_IRQn);              // disable RTC Interrupts
+          TX_Timer_Run();                         // activate timer 1
           SegmentLCD_Write("Mess");
-          //InitADC();
+          InitADC();
           routineactive = false;                  // Set routine as not active
           break;
 
         case uart:
+          DMA_Reset();
+          TX_Timer_Stop();                        // disable RTC Interrupts
           SegmentLCD_Write("Uart");
           InitUart();                             // Initialise Uart
           routineactive = false;                  // Set routine as not active
           break;
 
         case exit_test:
+          NVIC_EnableIRQ(RTC_IRQn);               // enable RTC Interrupts
+          TX_Timer_Stop();
+          SegmentLCD_NumberOff();                 // clear value on display
+          SegmentLCD_Symbol(LCD_SYMBOL_DP10,0);
           SegmentLCD_Write("Tests X");
           routineactive = false;                  // Set routine as not active
           break;
@@ -434,10 +470,10 @@ void STATE_INITIALISER(void)
           break;
 
         case rburst:
-          SM_Testing = measure;
+          SM_Testing = tst_measure;
           break;
 
-        case measure:
+        case tst_measure:
           SM_Testing = uart;
           break;
 
