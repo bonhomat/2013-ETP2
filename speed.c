@@ -36,21 +36,19 @@
 #include "us_rx.h"
 #include "ui.h"
 
-#include "distance.h"
+#include "speed.h"
 
 
 /*******************************************************************************
  **************************   DATA DEFINITIONS *********************************
  ******************************************************************************/
 
-#define DIST_BUF_SIZE  16       // max number of dist measurements in buffer
+#define SPEED_BUF_SIZE  5       // max number of dist measurements in buffer
 
 /***************************************************************************//**
  * Static variables
  *******************************************************************************/
-uint16_t  Dist_buf[ DIST_BUF_SIZE ]; // Distance Buffer
-int8_t    offset_val = 0;     // offset of the distanc masurement +/-100mm in 5mm steps
-uint8_t   noMeasurements = 1;  // max val is DIST_BUF_SIZE;
+uint16_t  Dist_Speed_buf[ SPEED_BUF_SIZE ]; // Distance Buffer
 
 
 
@@ -63,46 +61,38 @@ uint8_t   noMeasurements = 1;  // max val is DIST_BUF_SIZE;
  * @brief get average from the buffer
  * @return average
  *****************************************************************************/
-uint16_t average_Dist_buf( uint8_t valsInBuf )
+uint16_t average_Speed_buf( uint8_t valsInBuf )
 {
-  uint32_t avg = 0;   // used for return value
-  for( uint8_t i = 0; i < valsInBuf; i++)
+  int32_t avg = 0;   // used for return value
+  uint8_t noVals = 0;
+  for( uint8_t i = 0; i < valsInBuf-1; i++)
   {
-    avg += Dist_buf[i];
+    if (Dist_Speed_buf[i]>0)
+    {
+      avg += Dist_Speed_buf[i]-Dist_Speed_buf[i+1];
+      noVals++;
+    }
   }
-  avg /= valsInBuf;
+  avg /= noVals;
   
-  return (uint16_t)avg;
+  return (int16_t)avg;
 }
 
 /**************************************************************************//**
- * @brief get average distance from noSamples measurements
+ * @brief get average speed from 5 measurements
  * @return distance
  *****************************************************************************/
-uint16_t getAvgDistance( uint8_t noSamples )
+int16_t getAvgSpeed(void)
 {
-  uint32_t  dist; // used for return value
-  uint8_t   i;    // internal counter
+  int32_t   speed;    // used for return value
+  uint8_t   i;        // internal counter
   uint8_t   destPos = 0;
-  
-  for( i = 0; i < DIST_BUF_SIZE; i++)   // clear the buffer
-  {
-    Dist_buf[destPos] = 0;
-  }
-  
-  if(noSamples > DIST_BUF_SIZE) noSamples = DIST_BUF_SIZE;
   
   // ButtonsDisable();  // disable user buttons
   
-  RTC_tick = false;
-  while( !RTC_tick )    // wait for tick
-  {
-    EMU_EnterEM1();
-  }
   
-  
-  #define MAX_DIST_READINGS   2*DIST_BUF_SIZE   // max number of trials
-  for( i = 0; destPos < noSamples && i < 2*noSamples; i++ )
+  #define SPEED_DIST_READINGS   5   // of dist-readings
+  for( i = 0; i < SPEED_DIST_READINGS; i++ )
   {
     RTC_tick = false;
     TX_Start_Burst();
@@ -110,12 +100,13 @@ uint16_t getAvgDistance( uint8_t noSamples )
     if ( out_of_range )
     {
       // do nothing
+      Dist_Speed_buf[destPos] = 0;
     }
     else
     {
-      Dist_buf[destPos] = MaxCount; // store uncalibrated distance into buffer
-      destPos++;
+      Dist_Speed_buf[destPos] = MaxCount; // store uncalibrated distance into buffer
     }
+    destPos++;
     while( !RTC_tick )    // wait for tick
     {
       EMU_EnterEM1();
@@ -123,15 +114,13 @@ uint16_t getAvgDistance( uint8_t noSamples )
   }
   
   // caluclations
-  dist = c_air / 10;
-  dist *= average_Dist_buf(destPos);
-  dist /= 32000;
-  
-  dist += offset_val;
+  speed = c_air / 10;
+  speed *= average_Speed_buf(5);
+  speed /= 32000;
   
   // ButtonsEnable();  // enable user buttons
   
-  return (uint16_t)dist;
+  return (int16_t)speed;
 } // getDistance()
 
 

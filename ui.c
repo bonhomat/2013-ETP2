@@ -37,7 +37,7 @@
 #include "us_rx.h"
 #include "temperature.h"
 #include "distance.h"
-
+#include "speed.h"
 
 /*******************************************************************************
  **************************   DATA DEFINITIONS   *******************************
@@ -239,6 +239,10 @@ void ButtonPB1pressed(void)
 
     case speed:
       // measure speed
+      SegmentLCD_Symbol(LCD_SYMBOL_GECKO, 1);
+      SegmentLCD_Number( getAvgSpeed() );
+      SegmentLCD_Symbol(LCD_SYMBOL_GECKO, 0);
+      SegmentLCD_Symbol(LCD_SYMBOL_DP10,1);
       break;
 
     case temp:
@@ -301,6 +305,7 @@ void STATE_INITIALISER(void)
 
     case distance:
       TX_Timer_Run();
+      TX_Stop_Burst();
       SegmentLCD_NumberOff();
       SegmentLCD_Symbol(LCD_SYMBOL_DEGC,0);
       SegmentLCD_Symbol(LCD_SYMBOL_DP10,0);
@@ -310,6 +315,8 @@ void STATE_INITIALISER(void)
       break;
 
     case speed:
+      TX_Timer_Run();
+      TX_Stop_Burst();
       SegmentLCD_Write("SPEED");
       routineactive = false;
       break;

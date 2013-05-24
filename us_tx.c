@@ -103,7 +103,7 @@ void TX_Stop_Burst(void)
  ******************************************************************************/
 void TX_Timer_Run(void)
 {
-  CMU_ClockEnable ( cmuClock_TIMER1, true );  /* Enable clock for TIMER1 */
+  // CMU_ClockEnable ( cmuClock_TIMER1, true );  /* Enable clock for TIMER1 */
   TIMER_Enable    ( TIMER1, true );           /* Enable TIMER1 */
 }
 
@@ -114,7 +114,7 @@ void TX_Timer_Run(void)
 void TX_Timer_Stop(void)
 {
   TIMER_Enable    ( TIMER1, false );          /* Disable TIMER1 */
-  CMU_ClockEnable ( cmuClock_TIMER1, false ); /* Disable clock for TIMER1 */
+  // CMU_ClockEnable ( cmuClock_TIMER1, false ); /* Disable clock for TIMER1 */
 }
 
 
@@ -266,10 +266,7 @@ void InitTimer1(void)
   /* Initialize and Configure timer */
   TIMER_Init( TIMER1, &timerInit );
 
-
-  CMU_ClockEnable( cmuClock_TIMER1, false );
-  // /* Start timer */
-  /* timer is now ready to get started */
+  /* Start timer */
 
 } // END: InitTimer
 
