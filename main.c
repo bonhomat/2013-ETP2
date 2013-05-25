@@ -61,6 +61,7 @@ uint32_t tcntr = 0; /* test counter for break while waiting for temp */
  ******************************************************************************/
 
 
+#if 0
 /**************************************************************************//**
  * @brief Setup for energy measurments of device
  *****************************************************************************/
@@ -103,7 +104,7 @@ void setupSWO(void)
   ITM->LAR = 0xC5ACCE55;
   ITM->TCR = 0x10009;
 }
-
+#endif
 
 
 /*******************************************************************************
@@ -118,7 +119,7 @@ int main(void)
   /* Chip revision alignment and errata fixes */
   CHIP_Init();
 
-  setupSWO();
+  // setupSWO();
 
   /*Initialize peripherals */
   InitClocks();                   // Initialize clock system

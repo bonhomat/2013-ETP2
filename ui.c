@@ -69,6 +69,7 @@ bool  PB1waspressed     = false;      /**< */
  *****************************************************************************/
 void ButtonsEnable(void)
 {
+  
   /* Enable GPIO_EVEN interrupt vector in NVIC*/
   NVIC_EnableIRQ(GPIO_EVEN_IRQn);
 
@@ -318,10 +319,12 @@ void STATE_INITIALISER(void)
       TX_Timer_Run();
       TX_Stop_Burst();
       SegmentLCD_Write("SPEED");
+      InitADC();
       routineactive = false;
       break;
 
     case temp:
+      TX_Stop_Burst();
       InitTSensor( T_SENS_ACTIVE );      // Put temp sensor into active mode
       SegmentLCD_Write("AIRTemp");
       RTC_cntr = 0;
@@ -368,26 +371,28 @@ void STATE_INITIALISER(void)
           break;
 
         case continious:
-          TX_Timer_Run();                         // activate timer 1
           TX_Stop_Burst();
+          TX_Timer_Run();                         // activate timer 1
           SegmentLCD_Write("CW >>>");
           routineactive = false;                  // Set routine as not active
           break;
 
         case sburst:
-          TX_Timer_Run();                         // activate timer 1
           TX_Stop_Burst();
+          TX_Timer_Run();                         // activate timer 1
           SegmentLCD_Write("Burst");
           routineactive = false;                  // Set routine as not active
           break;
 
         case rburst:
+          TX_Stop_Burst();
           TX_Timer_Run();                         // activate timer 1
           SegmentLCD_Write("R-Burst");
           routineactive = false;                  // Set routine as not active
           break;
 
         case tst_measure:
+          TX_Stop_Burst();
           //NVIC_DisableIRQ(RTC_IRQn);              // disable RTC Interrupts
           TX_Timer_Run();                         // activate timer 1
           SegmentLCD_Write("Mess");
